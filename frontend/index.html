@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>おねんねブラスト</title>
+<title>睡眠スイミング</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -106,6 +106,10 @@
 
   /* ===================== テトリスモード ===================== */
   #tetris-wrap{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; gap:10px; }
+  #tetris-wrap, #tetris-wrap *{
+    touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
   .tetris-layout{ display:flex; gap:10px; width:100%; justify-content:center; align-items:flex-start; position:relative; }
   #tetrisBoard{ position:relative; width:min(46vw, 240px); aspect-ratio:1/2; display:grid;
     grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(20,1fr); gap:2px;
@@ -296,10 +300,21 @@
     padding:1px 6px; margin-left:4px; }
   .dm-bubble-row{ display:flex; margin-bottom:6px; }
   .dm-bubble-row.mine{ justify-content:flex-end; }
-  .dm-bubble{ max-width:75%; padding:8px 12px; border-radius:14px; font-size:13.5px; word-break:break-word; text-align:left; }
+  .dm-bubble-col{ max-width:78%; min-width:0; }
+  .dm-bubble{ display:inline-block; max-width:100%; padding:8px 12px; border-radius:14px; font-size:13.5px; word-break:break-word; overflow-wrap:break-word; text-align:left; }
   .dm-bubble-row.mine .dm-bubble{ background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2a1730; border-bottom-right-radius:4px; }
   .dm-bubble-row:not(.mine) .dm-bubble{ background:var(--panel-light); border-bottom-left-radius:4px; }
   .dm-time{ font-size:9px; color:var(--text-dim); margin-top:2px; }
+  .dm-thread-header{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .dm-thread-back{ background:var(--panel-light); border:none; border-radius:10px; color:var(--text); font-size:16px;
+    width:36px; height:36px; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .dm-thread-avatar{ width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; color:#2a1730; background:linear-gradient(135deg,var(--blue),var(--mint)); }
+  .dm-thread-title{ display:flex; flex-direction:column; }
+  .dm-thread-title b{ font-size:15px; color:var(--text); }
+  .dm-thread-title span{ font-size:10px; color:var(--text-dim); }
+  .friend-item.pending{ border-left:3px solid var(--coral); }
+  .friend-item.chat{ border-left:3px solid var(--blue); }
   .mention-tag{ color:var(--gold); font-weight:800; }
   .empty-hint{ text-align:center; color:var(--text-dim); font-size:13px; padding:16px 0; }
 
@@ -448,6 +463,16 @@
   }
 
   // ===================== スキン =====================
+  const PATTERN_LAYERS = {
+    stripe: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.32) 0 3px, transparent 3px 9px)',
+    dot: 'radial-gradient(circle at 3px 3px, rgba(255,255,255,0.55) 1.6px, transparent 1.8px) 0 0/9px 9px',
+    grid: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.26) 0 1.4px, transparent 1.4px 8px), repeating-linear-gradient(90deg, rgba(255,255,255,0.26) 0 1.4px, transparent 1.4px 8px)',
+    wave: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.28) 0 2px, transparent 2px 10px)',
+    zigzag: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px), repeating-linear-gradient(-45deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
+    diamond: 'repeating-linear-gradient(60deg, rgba(255,255,255,0.24) 0 2px, transparent 2px 9px), repeating-linear-gradient(-60deg, rgba(255,255,255,0.24) 0 2px, transparent 2px 9px)'
+  };
+  const PATTERN_LABELS = { stripe:'ストライプ', dot:'ドット', grid:'グリッド', wave:'ウェーブ', zigzag:'ジグザグ', diamond:'ダイヤ柄' };
+
   const SKINS = [
     { id:'default', name:'ミッドナイトキャンディ', price:0, desc:'定番のパープル×ゴールドの夜空テーマ。',
       vars:{ '--bg-deep':'#1a1233','--bg-deep2':'#241a45','--panel':'#2c2054','--panel-light':'#382a68',
@@ -602,8 +627,94 @@
         {bg:'linear-gradient(135deg,#FFE9B0,#FFC94D)'},{bg:'linear-gradient(135deg,#FFB8D6,#FF7FA6)'},
         {bg:'linear-gradient(135deg,#F5D6E4,#E0A9C4)'},{bg:'linear-gradient(135deg,#FFF0C6,#FFDD8A)'},
         {bg:'linear-gradient(135deg,#FFD9E8,#FFB0CE)'}
+      ] },
+    { id:'mintchoco', name:'ミントチョコレート', price:900, desc:'ミントの爽やかさとビターチョコの甘さの組み合わせ。',
+      vars:{ '--bg-deep':'#1a120a','--bg-deep2':'#241a10','--panel':'#332415','--panel-light':'#453120',
+        '--gold':'#C68642','--coral':'#A6673A','--mint':'#5FDDA8','--blue':'#7FC9A0','--purple':'#8B5A2B',
+        '--pink':'#D9A679','--lime':'#8FE0B0','--text':'#FFF6EC','--text-dim':'#C9A88A' },
+      titleGrad:'linear-gradient(90deg,#5FDDA8,#C68642)',
+      colors:[
+        {bg:'linear-gradient(135deg,#7FE8BC,#5FDDA8)'},{bg:'linear-gradient(135deg,#D9A679,#C68642)'},
+        {bg:'linear-gradient(135deg,#8FE0B0,#4FC090)'},{bg:'linear-gradient(135deg,#B8845A,#8B5A2B)'},
+        {bg:'linear-gradient(135deg,#9FE8C6,#6FCCA0)'},{bg:'linear-gradient(135deg,#E0B98A,#A6673A)'},
+        {bg:'linear-gradient(135deg,#6FDDB0,#3FAE82)'}
+      ] },
+    { id:'lavender', name:'ラベンダーミルク', price:1100, desc:'ラベンダー畑とミルクのようなやさしい紫パステル。',
+      vars:{ '--bg-deep':'#1c1526','--bg-deep2':'#2a1f3b','--panel':'#372a4d','--panel-light':'#473763',
+        '--gold':'#D4B8FF','--coral':'#FFB8E0','--mint':'#C6D4FF','--blue':'#B0A8FF','--purple':'#9D7FE8',
+        '--pink':'#E8B8FF','--lime':'#D0C6FF','--text':'#F5F0FF','--text-dim':'#B8A8D6' },
+      titleGrad:'linear-gradient(90deg,#D4B8FF,#FFB8E0)',
+      colors:[
+        {bg:'linear-gradient(135deg,#E4D0FF,#D4B8FF)'},{bg:'linear-gradient(135deg,#FFD0EC,#FFB8E0)'},
+        {bg:'linear-gradient(135deg,#D8E0FF,#C6D4FF)'},{bg:'linear-gradient(135deg,#C6BEFF,#B0A8FF)'},
+        {bg:'linear-gradient(135deg,#B79DF0,#9D7FE8)'},{bg:'linear-gradient(135deg,#F0CCFF,#E8B8FF)'},
+        {bg:'linear-gradient(135deg,#E0D8FF,#D0C6FF)'}
+      ] },
+    { id:'cherry', name:'チェリーソーダ', price:1300, desc:'ルビーのように濃いチェリーレッドの大人な一皿。',
+      vars:{ '--bg-deep':'#1a0508','--bg-deep2':'#2c0810','--panel':'#3f0d18','--panel-light':'#571322',
+        '--gold':'#FF4D6D','--coral':'#E8102E','--mint':'#FF7A94','--blue':'#FF3355','--purple':'#C4102C',
+        '--pink':'#FF6B85','--lime':'#FF9EAE','--text':'#FFF0F2','--text-dim':'#D68A96' },
+      titleGrad:'linear-gradient(90deg,#FF4D6D,#E8102E)',
+      colors:[
+        {bg:'linear-gradient(135deg,#FF7A94,#FF4D6D)'},{bg:'linear-gradient(135deg,#FF5070,#E8102E)'},
+        {bg:'linear-gradient(135deg,#FF9EAE,#FF6B85)'},{bg:'linear-gradient(135deg,#FF4560,#C4102C)'},
+        {bg:'linear-gradient(135deg,#FF849A,#F02E48)'},{bg:'linear-gradient(135deg,#FFB0BE,#FF7A94)'},
+        {bg:'linear-gradient(135deg,#F03350,#A80D22)'}
+      ] },
+    { id:'citrus', name:'シトラスポップ', price:950, desc:'オレンジとレモンがはじけるビタミンカラー全開。',
+      vars:{ '--bg-deep':'#1f1503','--bg-deep2':'#2e2005','--panel':'#412d08','--panel-light':'#553c0c',
+        '--gold':'#FFC800','--coral':'#FF8C00','--mint':'#FFE066','--blue':'#FFA800','--purple':'#FFB627',
+        '--pink':'#FFD23D','--lime':'#D4FF00','--text':'#FFFAE8','--text-dim':'#D6C088' },
+      titleGrad:'linear-gradient(90deg,#FFC800,#FF8C00)',
+      colors:[
+        {bg:'linear-gradient(135deg,#FFDA4D,#FFC800)'},{bg:'linear-gradient(135deg,#FFAA4D,#FF8C00)'},
+        {bg:'linear-gradient(135deg,#FFEB8A,#FFE066)'},{bg:'linear-gradient(135deg,#FFC15E,#FFA800)'},
+        {bg:'linear-gradient(135deg,#FFCB5E,#FFB627)'},{bg:'linear-gradient(135deg,#FFE070,#FFD23D)'},
+        {bg:'linear-gradient(135deg,#E8FF5E,#D4FF00)'}
+      ] },
+    { id:'monochrome', name:'モノクロームスタイル', price:1700, desc:'白と黒だけで魅せる、洗練されたミニマルテーマ。',
+      vars:{ '--bg-deep':'#0a0a0a','--bg-deep2':'#161616','--panel':'#232323','--panel-light':'#333333',
+        '--gold':'#E8E8E8','--coral':'#B0B0B0','--mint':'#D0D0D0','--blue':'#909090','--purple':'#C0C0C0',
+        '--pink':'#A8A8A8','--lime':'#F0F0F0','--text':'#FFFFFF','--text-dim':'#999999' },
+      titleGrad:'linear-gradient(90deg,#F0F0F0,#909090)',
+      colors:[
+        {bg:'linear-gradient(135deg,#F5F5F5,#D8D8D8)'},{bg:'linear-gradient(135deg,#C0C0C0,#9A9A9A)'},
+        {bg:'linear-gradient(135deg,#D8D8D8,#B0B0B0)'},{bg:'linear-gradient(135deg,#A8A8A8,#787878)'},
+        {bg:'linear-gradient(135deg,#CACACA,#A0A0A0)'},{bg:'linear-gradient(135deg,#E8E8E8,#C8C8C8)'},
+        {bg:'linear-gradient(135deg,#909090,#606060)'}
+      ] },
+    { id:'aurora', name:'オーロラヴェール', price:2000, desc:'極北の夜空に揺らめくオーロラの神秘的な光。',
+      vars:{ '--bg-deep':'#020f14','--bg-deep2':'#051e26','--panel':'#0a2e38','--panel-light':'#0f404d',
+        '--gold':'#7FFFD4','--coral':'#FF7FE0','--mint':'#5CFFB8','--blue':'#5CC8FF','--purple':'#8A7FFF',
+        '--pink':'#B87FFF','--lime':'#B0FF5C','--text':'#EAFFFC','--text-dim':'#7FC2C4' },
+      titleGrad:'linear-gradient(90deg,#7FFFD4,#B87FFF)',
+      colors:[
+        {bg:'linear-gradient(135deg,#9EFFE0,#5CFFB8)'},{bg:'linear-gradient(135deg,#FFA8EC,#FF7FE0)'},
+        {bg:'linear-gradient(135deg,#8ADCFF,#5CC8FF)'},{bg:'linear-gradient(135deg,#ADA3FF,#8A7FFF)'},
+        {bg:'linear-gradient(135deg,#D0A8FF,#B87FFF)'},{bg:'linear-gradient(135deg,#CBFF8A,#B0FF5C)'},
+        {bg:'linear-gradient(135deg,#A0FFE8,#7FFFD4)'}
       ] }
   ];
+
+  // ===================== 模様入りスキンを自動生成（既存パレット×パターンの組み合わせ）=====================
+  // 通常スキンより高価に設定し、ボードの各ブロックに柄（ストライプ・ドットなど）を重ねて描画する
+  (function generatePatternedSkins(){
+    const plainSkins = SKINS.slice();
+    const patternKeys = Object.keys(PATTERN_LAYERS);
+    plainSkins.forEach((base, i)=>{
+      const patternKey = patternKeys[i % patternKeys.length];
+      SKINS.push({
+        id: `${base.id}-${patternKey}`,
+        name: `${base.name}（${PATTERN_LABELS[patternKey]}柄）`,
+        price: Math.round(base.price * 2.3 + 600),
+        desc: `${base.desc} ブロックに${PATTERN_LABELS[patternKey]}模様をあしらった特別バージョン。`,
+        vars: base.vars,
+        titleGrad: base.titleGrad,
+        colors: base.colors,
+        pattern: patternKey
+      });
+    });
+  })();
   let ownedSkins = ['default'];
   let equippedSkin = 'default';
 
@@ -675,8 +786,9 @@
 
   const DAILY_STATS_DEFAULT = { linesCleared:0, piecesPlaced:0, combos:0, gamesPlayed:0, scoreEarned:0,
     bestSingleGameScore:0, tripleClearCount:0, maxComboStreak:0, hardModeGamesPlayed:0, maxNoClearStreak:0, bigPiecesPlaced:0 };
-  let dailyStats = { date:'', ...DAILY_STATS_DEFAULT };
-  let quests = [];
+  let dailyStats = { ...DAILY_STATS_DEFAULT };
+  let activeQuests = [];
+  let questsCompletedCount = 0;
 
   let pendingMode = currentMode, pendingSize = SIZE;
   let authToken = null;
@@ -690,7 +802,7 @@
   const STORAGE_BEST = 'candyblast-highscore';
   const STORAGE_BEST_SCORES = 'candyblast-bestScores-v1';
   const STORAGE_COINS = 'candyblast-coins';
-  const STORAGE_QUESTS = 'candyblast-quests-v1';
+  const STORAGE_QUESTS = 'candyblast-quests-v2';
   const STORAGE_SETTINGS = 'candyblast-settings-v1';
   const STORAGE_SKINS = 'candyblast-skins-v1';
 
@@ -1208,14 +1320,16 @@
   }
 
   function updateScoreUI(){
-    scoreValEl.textContent = score;
+    const curScore = parseInt(scoreValEl.textContent,10) || 0;
+    if(score < curScore){ scoreValEl.textContent = score; } else { animateNumberTo(scoreValEl, score); }
     // bestはbestScoresから最大値を更新（表示用）
     const maxBest = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
     if (maxBest > best) {
       best = maxBest;
       saveBestScores();
     }
-    bestValEl.textContent = best;
+    const curBest = parseInt(bestValEl.textContent,10) || 0;
+    if(best < curBest){ bestValEl.textContent = best; } else { animateNumberTo(bestValEl, best); }
   }
   function updateCoinUI(){ coinValEl.textContent = coins; saveCoins(coins); }
 
@@ -1281,41 +1395,70 @@
     return picked;
   }
 
+  // ===================== 無限クエスト(エンドレス) =====================
+  // クリアするたびにすぐ次のクエストが補充され、達成数が増えるほど目標値と報酬がじわじわ大きくなる
+  function scaledTarget(base){
+    return Math.max(1, Math.round(base * (1 + questsCompletedCount * 0.12)));
+  }
+  function scaledReward(base){
+    return Math.round(base * (1 + questsCompletedCount * 0.15));
+  }
+  function issueNewQuest(excludePoolIds){
+    const pool = QUEST_POOL.filter(q=>!excludePoolIds.includes(q.id));
+    const poolItem = (pool.length ? pool : QUEST_POOL)[Math.floor(Math.random()*(pool.length ? pool.length : QUEST_POOL.length))];
+    return {
+      poolId: poolItem.id,
+      desc: poolItem.desc,
+      statKey: poolItem.statKey,
+      baseline: dailyStats[poolItem.statKey] || 0,
+      target: scaledTarget(poolItem.target),
+      reward: scaledReward(poolItem.reward),
+      claimed: false
+    };
+  }
+  function ensureActiveQuests(){
+    while(activeQuests.length < 3){
+      const excludeIds = activeQuests.map(q=>q.poolId);
+      activeQuests.push(issueNewQuest(excludeIds));
+    }
+  }
+  function questProgressOf(q){
+    return Math.max(0, (dailyStats[q.statKey] || 0) - q.baseline);
+  }
+
   async function loadDailyQuests(){
-    const today = todayKey();
     try{
       const res = await window.storage.get(STORAGE_QUESTS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
-        if(parsed.date === today){
-          dailyStats = { ...DAILY_STATS_DEFAULT, ...parsed.stats, date:today };
-          quests = parsed.quests;
-          return;
-        }
+        dailyStats = { ...DAILY_STATS_DEFAULT, ...parsed.stats };
+        questsCompletedCount = parsed.completedCount || 0;
+        activeQuests = Array.isArray(parsed.active) ? parsed.active : [];
       }
     }catch(err){}
-    dailyStats = { date:today, ...DAILY_STATS_DEFAULT };
-    quests = pickDailyQuests();
+    ensureActiveQuests();
     await saveDailyQuests();
   }
 
   async function saveDailyQuests(){
-    dailyStats.date = todayKey();
-    try{ await window.storage.set(STORAGE_QUESTS, JSON.stringify({date:dailyStats.date, stats:dailyStats, quests}), false); }catch(err){}
+    try{ await window.storage.set(STORAGE_QUESTS, JSON.stringify({stats:dailyStats, active:activeQuests, completedCount:questsCompletedCount}), false); }catch(err){}
   }
 
   function updateQuestProgress(){
-    quests.forEach(q=>{ q.progress = dailyStats[q.statKey] || 0; });
     saveDailyQuests();
     if(modalOverlay.classList.contains('show') && modalContent.dataset.mode==='quests') renderQuestModal();
   }
 
-  function claimQuest(id){
-    const q = quests.find(q=>q.id===id);
-    if(!q || q.claimed || q.progress < q.target) return;
-    q.claimed = true;
+  function claimQuest(poolId){
+    const idx = activeQuests.findIndex(q=>q.poolId===poolId);
+    if(idx===-1) return;
+    const q = activeQuests[idx];
+    if(q.claimed || questProgressOf(q) < q.target) return;
     coins += q.reward;
     updateCoinUI();
+    questsCompletedCount += 1;
+    activeQuests.splice(idx,1);
+    ensureActiveQuests();
     saveDailyQuests();
     renderQuestModal();
     syncToServer();
@@ -1323,17 +1466,19 @@
 
   function renderQuestModal(){
     modalContent.dataset.mode = 'quests';
-    let html = `<h2 style="color:var(--mint);">📋 デイリークエスト</h2><div class="sub">毎日リセットされます。がんばって集めよう！</div>`;
-    quests.forEach(q=>{
-      const pct = Math.min(100, Math.floor((q.progress/q.target)*100));
-      const done = q.progress >= q.target;
+    let html = `<h2 style="color:var(--mint);">📋 エンドレスクエスト</h2>
+      <div class="sub">達成するとすぐ次のクエストが補充される、無限に挑戦し続けられるクエストです。通算<b style="color:var(--gold);">${questsCompletedCount}</b>個クリア中！</div>`;
+    activeQuests.forEach(q=>{
+      const progress = questProgressOf(q);
+      const pct = Math.min(100, Math.floor((progress/q.target)*100));
+      const done = progress >= q.target;
       html += `
         <div class="quest-item">
           <div class="qtitle">${q.desc}</div>
           <div class="quest-bar-bg"><div class="quest-bar-fill" style="width:${pct}%"></div></div>
           <div class="quest-foot">
-            <span>${Math.min(q.progress,q.target)} / ${q.target}</span>
-            <button class="claim-btn" data-qid="${q.id}" ${(!done||q.claimed)?'disabled':''}>
+            <span>${Math.min(progress,q.target)} / ${q.target}</span>
+            <button class="claim-btn" data-qid="${q.poolId}" ${(!done||q.claimed)?'disabled':''}>
               ${q.claimed ? '受取済み' : `🪙${q.reward} 受け取る`}
             </button>
           </div>
@@ -1346,6 +1491,12 @@
   }
 
   // ===================== スキン =====================
+  function buildPatternedColors(baseColors, patternKey){
+    if(!patternKey || !PATTERN_LAYERS[patternKey]) return baseColors;
+    const layer = PATTERN_LAYERS[patternKey];
+    return baseColors.map(c=>({ bg: `${layer}, ${c.bg}` }));
+  }
+
   function applySkin(id){
     const skin = SKINS.find(s=>s.id===id) || SKINS[0];
     equippedSkin = skin.id;
@@ -1353,7 +1504,7 @@
     const titleEl = document.querySelector('.title');
     if(titleEl) titleEl.style.background = skin.titleGrad;
     COLORS.length = 0;
-    skin.colors.forEach(c=>COLORS.push(c));
+    buildPatternedColors(skin.colors, skin.pattern).forEach(c=>COLORS.push(c));
     if(cellEls.length){
       board.forEach((cellData, idx)=>{
         if(cellData.filled && COLORS[cellData.colorIdx]) cellEls[idx].style.background = COLORS[cellData.colorIdx].bg;
@@ -1451,19 +1602,27 @@
     return html;
   }
 
+  let skinFilter = 'all';
   function renderSkinTab(){
-    let html = `<div class="sub" style="margin-bottom:10px;">🪙 ${coins} 所持中。ゲームで貯めたコインで見た目を変えられます。</div>`;
-    SKINS.forEach(skin=>{
+    let html = `<div class="sub" style="margin-bottom:8px;">🪙 ${coins} 所持中。ゲームで貯めたコインで見た目を変えられます。</div>`;
+    html += `<div class="tab-row" style="margin-bottom:10px;">
+      <button class="tab-btn sfilter-btn ${skinFilter==='all'?'active':''}" data-sfilter="all">すべて</button>
+      <button class="tab-btn sfilter-btn ${skinFilter==='plain'?'active':''}" data-sfilter="plain">無地</button>
+      <button class="tab-btn sfilter-btn ${skinFilter==='pattern'?'active':''}" data-sfilter="pattern">🎨 柄物</button>
+    </div>`;
+    const list = SKINS.filter(s => skinFilter==='all' ? true : skinFilter==='pattern' ? !!s.pattern : !s.pattern);
+    list.forEach(skin=>{
       const owned = ownedSkins.includes(skin.id);
       const equipped = equippedSkin === skin.id;
       const canBuy = !owned && coins >= skin.price;
       let btnLabel = equipped ? '装備中' : owned ? '装備する' : (skin.price===0 ? '入手する' : (canBuy ? '購入する' : 'コインが足りません'));
       let btnAction = equipped ? '' : owned ? 'equip' : 'buy';
+      const swatchColors = buildPatternedColors(skin.colors, skin.pattern);
       html += `
         <div class="quest-item">
-          <div class="qtitle">${skin.name}${equipped?' ✅':''}</div>
+          <div class="qtitle">${skin.name}${equipped?' ✅':''}${skin.pattern?' <span class="coin-tag">柄物</span>':''}</div>
           <div class="sub" style="margin:2px 0 8px;">${skin.desc}</div>
-          <div class="skin-swatches">${skin.colors.map(c=>`<span class="swatch" style="background:${c.bg}"></span>`).join('')}</div>
+          <div class="skin-swatches">${swatchColors.map(c=>`<span class="swatch" style="background:${c.bg}"></span>`).join('')}</div>
           <div class="quest-foot" style="margin-top:8px;">
             <span>${skin.price===0 ? '無料' : `🪙${skin.price}`}</span>
             <button class="claim-btn" data-skin="${skin.id}" data-action="${btnAction}" ${(equipped || (!owned && !canBuy))?'disabled':''}>${btnLabel}</button>
@@ -1483,10 +1642,16 @@
       </div>
       <div id="settingsTabBody">${tab==='skin' ? renderSkinTab() : renderModeTab()}</div>
     `;
-    modalContent.querySelectorAll('.tab-btn').forEach(btn=>{
+    modalContent.querySelectorAll('.tab-btn[data-stab]').forEach(btn=>{
       btn.addEventListener('click', ()=>renderSettingsModal(btn.dataset.stab));
     });
     if(tab==='skin'){
+      modalContent.querySelectorAll('.sfilter-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          skinFilter = btn.dataset.sfilter;
+          renderSettingsModal('skin');
+        });
+      });
       modalContent.querySelectorAll('.claim-btn[data-skin]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const id = btn.dataset.skin, action = btn.dataset.action;
@@ -1623,9 +1788,11 @@
     coins = 0;
     ownedSkins = ['default'];
     equippedSkin = 'default';
-    // クエストもリセット（新たな日付で再生成）
-    dailyStats = { date: todayKey(), ...DAILY_STATS_DEFAULT };
-    quests = pickDailyQuests();
+    // クエストもリセット(統計を初期化し、新規クエストをやり直す)
+    dailyStats = { ...DAILY_STATS_DEFAULT };
+    questsCompletedCount = 0;
+    activeQuests = [];
+    ensureActiveQuests();
     // プレイ時間リセット
     stopPlayTimeTracking();
     // リアルタイム同期も停止
@@ -1808,8 +1975,11 @@
         saveCoins(0);
         saveSkinsData();
         // クエストは新しく生成
-        dailyStats = { date: todayKey(), ...DAILY_STATS_DEFAULT };
-        quests = pickDailyQuests();
+        // クエストは新しく生成
+        dailyStats = { ...DAILY_STATS_DEFAULT };
+        questsCompletedCount = 0;
+        activeQuests = [];
+        ensureActiveQuests();
         saveDailyQuests();
         updateScoreUI();
         updateCoinUI();
@@ -1860,7 +2030,7 @@
           coins,
           skins: ownedSkins,
           equippedSkin,
-          quests,
+          quests: activeQuests,
           mode: currentMode,
           size: SIZE,
           playTime
@@ -1908,12 +2078,10 @@
       if (data.playTime !== undefined) {
         playTime = data.playTime;
       }
-      // クエストはサーバーからもらったものがあれば反映（ただし日付が一致しているか確認）
-      if (data.quests && data.quests.length) {
-        // サーバーにクエストがある場合は上書き（日付も合わせる）
-        // ここでは単純に置き換える（必要に応じて日付チェック）
-        quests = data.quests;
-        dailyStats = data.dailyStats || dailyStats;
+      // クエストはサーバーにあれば反映（他端末での進捗を引き継ぐ）
+      if (data.quests && data.quests.length && data.quests[0].poolId) {
+        activeQuests = data.quests;
+        ensureActiveQuests();
         saveDailyQuests();
       }
     }catch(err){ console.warn('サーバーからの取得に失敗しました:', err.message); }
@@ -2604,8 +2772,8 @@
       } else {
         incomingRequests.forEach(r => {
           html += `
-            <div class="friend-item">
-              <span class="fname" data-showprofile="${r.id}">${r.id}</span>
+            <div class="friend-item pending">
+              <span class="fname" data-showprofile="${r.id}">🔔 ${r.id}</span>
               <button class="fbtn accept" data-accept="${r.id}">承認</button>
               <button class="fbtn decline" data-decline="${r.id}">拒否</button>
             </div>`;
@@ -2617,8 +2785,8 @@
       } else {
         outgoingRequests.forEach(r => {
           html += `
-            <div class="friend-item">
-              <span class="fname">${r.id}</span>
+            <div class="friend-item pending">
+              <span class="fname">📤 ${r.id}</span>
               <span class="fsub">承認待ち</span>
               <button class="fbtn decline" data-cancel="${r.id}">取消</button>
             </div>`;
@@ -2631,8 +2799,8 @@
         friendsList.forEach(f => {
           const unread = dmPerFriendUnread[f.id] || 0;
           html += `
-            <div class="friend-item" data-openthread="${f.id}" style="cursor:pointer;">
-              <span class="fname">${f.id}${unread ? `<span class="funread">${unread}</span>` : ''}</span>
+            <div class="friend-item chat" data-openthread="${f.id}" style="cursor:pointer;">
+              <span class="fname">💬 ${f.id}${unread ? `<span class="funread">${unread}</span>` : ''}</span>
               <span class="fsub">タップして会話を開く →</span>
             </div>`;
         });
@@ -2680,8 +2848,13 @@
   async function openDMThread(friendId){
     dmThreadWith = friendId;
     modalContent.dataset.mode = 'dmthread';
+    const initial = (friendId||'?').charAt(0).toUpperCase();
     modalContent.innerHTML = `
-      <h2 style="color:var(--gold);">💬 ${friendId} とのDM</h2>
+      <div class="dm-thread-header">
+        <button class="dm-thread-back" id="dmBackBtn">←</button>
+        <div class="dm-thread-avatar">${initial}</div>
+        <div class="dm-thread-title"><b>${friendId}</b><span>💬 ダイレクトメッセージ</span></div>
+      </div>
       <div id="dmMessages" style="height:300px; overflow-y:auto; background:var(--bg-deep2); border-radius:12px; padding:10px; margin:8px 0; border:1px solid rgba(255,255,255,0.05);">
         <div class="empty-hint">読み込み中...</div>
       </div>
@@ -2689,7 +2862,6 @@
         <input type="text" id="dmInput" placeholder="メッセージを入力...(@IDでメンション)" style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:var(--bg-deep2); color:var(--text); font-size:14px; font-family:'Nunito',sans-serif;">
         <button class="primary-btn" id="dmSendBtn" style="flex-shrink:0; width:auto; padding:10px 20px; margin:0;">送信</button>
       </div>
-      <button class="ghost-btn" id="dmBackBtn">← フレンド一覧へ戻る</button>
     `;
 
     async function loadThread(){
@@ -2703,7 +2875,7 @@
           const mine = m.from_id === currentUserId;
           return `
             <div class="dm-bubble-row ${mine ? 'mine' : ''}">
-              <div>
+              <div class="dm-bubble-col">
                 <div class="dm-bubble">${highlightMentions(m.message)}</div>
                 <div class="dm-time" style="text-align:${mine ? 'right' : 'left'};">${new Date(m.timestamp).toLocaleTimeString('ja-JP')}</div>
               </div>
@@ -3163,6 +3335,9 @@
   tBtnRotateEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisRotate(); });
   tBtnHardEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisHardDrop(); });
   tetrisBoardEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisRotate(); });
+  // ズームや長押しでの範囲選択・コピーメニューが出ないように抑制
+  tetrisWrapEl.addEventListener('contextmenu', (e)=>e.preventDefault());
+  tetrisWrapEl.addEventListener('selectstart', (e)=>e.preventDefault());
 
   // ===================== 初期化 =====================
   (async function start(){
