@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ワンワンブラスト</title>
+<title>キャンディブラスト</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -649,6 +649,18 @@
   };
   let currentRankingType = 'score';
   let rankingPollInterval = null;
+  let userSyncInterval = null;
+
+  // ===================== ログイン中のユーザーデータをリアルタイム同期 =====================
+  // 管理者コマンドでコインやスコアを変更されたときも、
+  // 再ログインしなくても画面に反映されるように定期的にサーバーから取得する
+  function startUserSync() {
+    if (userSyncInterval) return;
+    userSyncInterval = setInterval(() => { syncFromServer(); }, 5000);
+  }
+  function stopUserSync() {
+    if (userSyncInterval) { clearInterval(userSyncInterval); userSyncInterval = null; }
+  }
 
   function boardIndex(r,c){ return r*SIZE+c; }
   function todayKey(){ return new Date().toISOString().slice(0,10); }
@@ -1530,6 +1542,8 @@
     quests = pickDailyQuests();
     // プレイ時間リセット
     stopPlayTimeTracking();
+    // リアルタイム同期も停止
+    stopUserSync();
     playTime = 0;
     // UI更新
     bestValEl.textContent = '0';
@@ -1673,6 +1687,8 @@
         updateAccountButton();
         // プレイ時間追跡開始
         startPlayTimeTracking();
+        // ログイン中はサーバーの変更をリアルタイムで反映
+        startUserSync();
         msgEl.textContent = 'ログインしました！'; msgEl.className='auth-msg ok';
         // UI更新
         updateScoreUI();
@@ -1713,6 +1729,7 @@
         updateCoinUI();
         applySkin('default');
         startPlayTimeTracking();
+        startUserSync();
         updateAccountButton();
         msgEl.textContent = '登録が完了しました！復元コードは管理者のDiscordに通知されました。';
         msgEl.className='auth-msg ok';
