@@ -2041,7 +2041,7 @@
 
     if(pendingMode === 'tetris'){
       html += `
-        <div class="sub" style="margin:8px 0;">クラシックなテトリス。スマホ・iPadでもタップ操作でプレイ可能。ライン消去やコンボで得点が爆上がりします！</div>
+        <div class="sub" style="margin:8px 0;">テトリス。</div>
         <button class="primary-btn" id="applyModeBtn">テトリスを始める</button>`;
       return html;
     }
@@ -4028,13 +4028,14 @@
   document.addEventListener('keydown', (e)=>{
     if(currentMode!=='tetris' || !tetrisActive || tetrisGameOver) return;
     const key = e.key.toLowerCase();
-    if(['arrowleft','arrowright','arrowup','arrowdown',' ','a','d','w','s','q'].includes(key)) e.preventDefault();
+    const isSpace = key===' ' || key==='spacebar' || e.code==='Space';
+    if(['arrowleft','arrowright','arrowup','arrowdown','a','d','w','s','q'].includes(key) || isSpace) e.preventDefault();
     // 十字キーに加えて、片手操作しやすいようWASDにも対応。ホールドはQ。
     if(key==='arrowleft' || key==='a') tetrisMove(-1);
     else if(key==='arrowright' || key==='d') tetrisMove(1);
     else if(key==='arrowup' || key==='w') tetrisRotate();
     else if(key==='arrowdown' || key==='s') tetrisSoftDrop();
-    else if(key===' ') tetrisHardDrop();
+    else if(isSpace) tetrisHardDrop();
     else if(key==='q') tetrisHoldSwap();
   });
 
@@ -4184,13 +4185,10 @@
   // ===================== 更新履歴 / バージョン表示 =====================
   const CHANGELOG = [
     { version:'2.0.0', date:'2026-09', items:[
-      '⏱ タイムアタックモードを追加(制限時間60秒、専用ハイスコア・別ランキング)',
-      '🔥 コンボ倍率システムを追加(連続ライン消去でスコア倍率アップ)',
-      '🧱 テトリスにHOLD機能・WASD操作・操作説明パネルを追加',
+      '⏱ タイムアタックモードを追加',
+      '🔥 コンボ倍率システムを追加',
       '🏠 メインメニュー画面を新設。記録・実績、設定ページを追加',
-      '🔐 ログイン状態がリロードしても保持されるように改善',
-      '🔊 サウンドを一新(より満足感のあるサウンドに)',
-      '🐞 テトリスのハードドロップがiPad横画面で見えない不具合を修正'
+      '🔊 サウンドを一新',
     ]}
   ];
   function renderChangelogHTML(){
