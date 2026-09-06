@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>睡眠スイミング</title>
+<title>睡眠ブリッツ</title>
 <meta name="app-version" content="2026.09.05-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -112,7 +112,7 @@
     -webkit-tap-highlight-color:transparent;
   }
   .tetris-layout{ display:flex; gap:10px; width:100%; justify-content:center; align-items:flex-start; position:relative; }
-  #tetrisBoard{ position:relative; width:min(46vw, 240px); aspect-ratio:1/2; display:grid;
+  #tetrisBoard{ position:relative; width:min(46vw, 34vh, 240px); aspect-ratio:1/2; display:grid;
     grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(20,1fr); gap:2px;
     background:var(--panel); border-radius:16px; padding:6px; flex-shrink:0;
     box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.05); }
@@ -120,22 +120,44 @@
   .tetris-cell.filled{ box-shadow: inset 0 2px 4px rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.25); }
   .tetris-cell.ghost{ background:rgba(255,255,255,0.16); }
   .tetris-cell.clearing{ animation:clearFlash 0.32s ease-in forwards; z-index:5; }
-  .tetris-side{ display:flex; flex-direction:column; gap:10px; min-width:78px; flex-shrink:0; }
+  .tetris-side{ display:flex; flex-direction:column; gap:10px; min-width:78px; flex-shrink:0; position:relative; }
   .tetris-next-label{ font-size:10px; letter-spacing:1px; color:var(--text-dim); font-weight:700; text-align:center; }
   #tetrisNext{ background:var(--panel); border-radius:12px; padding:6px; display:grid; grid-template-columns:repeat(4,1fr);
     grid-template-rows:repeat(4,1fr); gap:2px; width:72px; height:72px; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05); }
+  #tetrisHoldBox{ background:var(--panel); border-radius:12px; padding:6px; display:grid; grid-template-columns:repeat(4,1fr);
+    grid-template-rows:repeat(4,1fr); gap:2px; width:72px; height:72px; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05); }
+  #tetrisHoldBox.used{ opacity:0.4; }
   .tetris-next-cell{ border-radius:2px; }
   .tetris-next-cell.empty{ background:transparent; }
   .tetris-info{ background:var(--panel); border-radius:12px; padding:8px; font-size:10px; color:var(--text-dim);
     font-weight:700; text-align:center; display:flex; flex-direction:column; gap:6px; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05); }
   .tetris-info b{ display:block; color:var(--gold); font-size:16px; font-family:'Baloo 2',sans-serif; margin-top:1px; }
-  .tetris-controls{ width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .tetris-help-btn{ background:var(--panel-light); border-radius:10px; padding:6px 4px; font-size:9.5px; font-weight:800;
+    color:var(--text-dim); text-align:center; cursor:pointer; }
+  .tetris-help-btn:active{ background:var(--purple); }
+  .tetris-help-panel{ display:none; position:absolute; right:0; top:0; z-index:50; width:220px;
+    background:var(--panel); border-radius:14px; padding:12px; font-size:11px; color:var(--text-dim); line-height:1.7;
+    box-shadow:0 12px 30px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); }
+  .tetris-help-panel.show{ display:block; }
+  .tetris-help-panel b{ color:var(--gold); display:block; margin-bottom:4px; font-size:12px; }
+  .tetris-controls{ width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .tetris-btn{ background:var(--panel-light); border:1px solid rgba(255,255,255,0.08); border-radius:14px;
     padding:16px 0; font-size:22px; font-weight:800; color:var(--text); text-align:center; cursor:pointer;
     user-select:none; touch-action:none; }
   .tetris-btn:active{ background:var(--purple); }
-  .tetris-btn.wide{ grid-column:span 3; font-size:14px; padding:13px 0; }
+  .tetris-btn.wide{ grid-column:span 4; font-size:14px; padding:13px 0; }
   .tetris-btn.hard{ background:linear-gradient(135deg, var(--gold), var(--coral)); color:#2a1730; }
+  .tetris-btn.hold{ font-size:12px; }
+
+  /* iPad横画面など、横長で高さが低いビューポートではハードドロップ等が画面外に隠れてしまうため、
+     ボード＋操作パネルを横並びレイアウトに切り替えて画面内に収める */
+  @media (orientation: landscape) and (max-height: 620px){
+    #tetris-wrap{ flex-direction:row; align-items:center; justify-content:center; gap:16px; max-width:100%; }
+    .tetris-layout{ flex-direction:column; align-items:center; width:auto; }
+    #tetrisBoard{ width:auto; height:min(82vh, 420px); }
+    .tetris-controls{ display:flex; flex-direction:column; width:150px; gap:8px; margin-top:0; }
+    .tetris-btn.wide{ grid-column:unset; }
+  }
 
   .coin-float{ position:fixed; font-family:'Baloo 2',sans-serif; font-weight:700; color:var(--gold); font-size:18px;
     z-index:40; pointer-events:none; text-shadow:0 2px 4px rgba(0,0,0,0.4); }
@@ -397,6 +419,10 @@
       <div id="tetrisBoard"></div>
       <div class="tetris-side">
         <div>
+          <div class="tetris-next-label">HOLD</div>
+          <div id="tetrisHoldBox"></div>
+        </div>
+        <div>
           <div class="tetris-next-label">NEXT</div>
           <div id="tetrisNext"></div>
         </div>
@@ -404,12 +430,15 @@
           <div>LEVEL<b id="tetrisLevel">1</b></div>
           <div>LINES<b id="tetrisLines">0</b></div>
         </div>
+        <div class="tetris-help-btn" id="tetrisHelpBtn">❓ 操作説明</div>
+        <div class="tetris-help-panel" id="tetrisHelpPanel"></div>
       </div>
       <div class="combo-text" id="tetrisComboText"></div>
     </div>
     <div class="tetris-controls">
-      <div class="tetris-btn" id="tBtnLeft">◀</div>
+      <div class="tetris-btn hold" id="tBtnHold">⇄ HOLD</div>
       <div class="tetris-btn" id="tBtnRotate">⟳</div>
+      <div class="tetris-btn" id="tBtnLeft">◀</div>
       <div class="tetris-btn" id="tBtnRight">▶</div>
       <div class="tetris-btn wide" id="tBtnSoft">▼ ソフトドロップ</div>
       <div class="tetris-btn wide hard" id="tBtnHard">⤓ ハードドロップ（一気に落とす）</div>
@@ -845,6 +874,10 @@
   const tBtnRotateEl = document.getElementById('tBtnRotate');
   const tBtnSoftEl = document.getElementById('tBtnSoft');
   const tBtnHardEl = document.getElementById('tBtnHard');
+  const tBtnHoldEl = document.getElementById('tBtnHold');
+  const tetrisHoldBoxEl = document.getElementById('tetrisHoldBox');
+  const tetrisHelpBtnEl = document.getElementById('tetrisHelpBtn');
+  const tetrisHelpPanelEl = document.getElementById('tetrisHelpPanel');
   const ghostEl = document.getElementById('ghost');
   const scoreValEl = document.getElementById('scoreVal');
   const bestValEl = document.getElementById('bestVal');
@@ -888,6 +921,46 @@
 
   let pendingMode = currentMode, pendingSize = SIZE;
   let authToken = null;
+  const STORAGE_AUTH = 'candyblast-auth-v1';
+  async function saveAuthSession(token, id){
+    try{ await window.storage.set(STORAGE_AUTH, JSON.stringify({token, id}), false); }catch(err){}
+  }
+  async function clearAuthSession(){
+    try{ await window.storage.delete(STORAGE_AUTH, false); }catch(err){}
+  }
+  async function loadAuthSession(){
+    try{
+      const res = await window.storage.get(STORAGE_AUTH, false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        return parsed.token ? parsed : null;
+      }
+    }catch(err){}
+    return null;
+  }
+  // リロード後も安全にログイン状態を復元する。
+  // トークンをローカルに保存し、起動時にサーバーへ検証リクエストを送って
+  // 有効な場合のみ復元(無効/期限切れなら破棄してゲスト状態に戻す)。
+  async function restoreSession(){
+    const saved = await loadAuthSession();
+    if(!saved) return false;
+    authToken = saved.token;
+    currentUserId = saved.id;
+    try{
+      const r = await fetch(`${API_BASE_URL}/api/sync`, { headers:{ 'Authorization':`Bearer ${authToken}` } });
+      if(!r.ok) throw new Error('invalid session');
+      const data = await r.json();
+      applySyncData(data);
+      updateAccountButton();
+      startPlayTimeTracking();
+      startUserSync();
+      return true;
+    }catch(err){
+      authToken = null; currentUserId = null;
+      await clearAuthSession();
+      return false;
+    }
+  }
   let currentUserId = null;
   let playTime = 0;
   let playTimeInterval = null;
@@ -1260,11 +1333,13 @@
       fullRows.forEach(r=>{ for(let c=0;c<SIZE;c++) cellsToClear.add(boardIndex(r,c)); });
       fullCols.forEach(c=>{ for(let r=0;r<SIZE;r++) cellsToClear.add(boardIndex(r,c)); });
       cellsToClear.forEach(idx=>{ cellEls[idx].classList.add('clearing'); spawnConfetti(cellEls[idx], linesCleared); });
-      playSound('clear');
+      playSound('clear', linesCleared);
+      // ===== コンボ倍率(連続でライン消去するほどスコア倍率が上がる。効果はスコア倍率のみ) =====
       const lineScore = linesCleared*100*linesCleared;
-      const streakBonus = streak>1 ? streak*50 : 0;
-      addScore(lineScore + streakBonus);
-      showCombo(linesCleared, streak);
+      const comboMultiplier = Math.min(4, 1 + (streak-1)*0.25);
+      const totalLineScore = Math.round(lineScore * comboMultiplier);
+      addScore(totalLineScore);
+      showCombo(linesCleared, streak, comboMultiplier);
       updateQuestProgress();
 
       // 派手な演出: 大きめコンボでは画面シェイク＋衝撃波リング
@@ -1293,11 +1368,12 @@
     }
   }
 
-  function showCombo(linesCleared, streakVal){
+  function showCombo(linesCleared, streakVal, multiplier){
     if(linesCleared<2 && streakVal<2) return;
     let msg = '';
     if(linesCleared>=2) msg = `COMBO x${linesCleared}!`;
     if(streakVal>=2) msg += (msg?'  ':'') + `🔥x${streakVal}`;
+    if(multiplier && multiplier>1) msg += (msg?'  ':'') + `倍率×${multiplier.toFixed(2)}`;
     comboTextEl.textContent = msg;
     // 大きいコンボほど文字を派手に大きく・強調
     const bigness = Math.min(1.6, 1 + (Math.max(linesCleared,streakVal)-1)*0.12);
@@ -1393,9 +1469,13 @@
     const currentBest = bestScores[currentMode] || 0;
     if (score > currentBest) {
       bestScores[currentMode] = score;
-      // 全体ベストも更新（表示用）
-      best = Math.max(best, score);
-      bestValEl.textContent = best;
+      if (isRegularMode(currentMode)) {
+        // 全体ベストも更新（表示用）
+        best = Math.max(best, score);
+        bestValEl.textContent = best;
+      } else {
+        animateNumberTo(bestValEl, score);
+      }
       saveBestScores();
       // サーバーへ送信（スロットリング: 2秒に1回まで）
       const now = Date.now();
@@ -1415,17 +1495,23 @@
     syncBestScore();
   }
 
+  function isRegularMode(m){ return m==='soft' || m==='baked' || m==='hard' || m==='extreme'; }
+
   function updateScoreUI(){
     const curScore = parseInt(scoreValEl.textContent,10) || 0;
     if(score < curScore){ scoreValEl.textContent = score; } else { animateNumberTo(scoreValEl, score); }
-    // bestはbestScoresから最大値を更新（表示用）
-    const maxBest = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
-    if (maxBest > best) {
-      best = maxBest;
-      saveBestScores();
-    }
     const curBest = parseInt(bestValEl.textContent,10) || 0;
-    if(best < curBest){ bestValEl.textContent = best; } else { animateNumberTo(bestValEl, best); }
+    if(isRegularMode(currentMode)){
+      const maxBest = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
+      if (maxBest > best) {
+        best = maxBest;
+        saveBestScores();
+      }
+      if(best < curBest){ bestValEl.textContent = best; } else { animateNumberTo(bestValEl, best); }
+    } else {
+      const modeBest = bestScores[currentMode] || 0;
+      if(modeBest < curBest){ bestValEl.textContent = modeBest; } else { animateNumberTo(bestValEl, modeBest); }
+    }
   }
   function updateCoinUI(){ coinValEl.textContent = coins; saveCoins(coins); }
 
@@ -1814,31 +1900,61 @@
       if(audioCtx.state === 'suspended') audioCtx.resume();
     }catch(err){}
   }
-  function playSound(type){
+  // より満足感のあるサウンド(単純な音量アップではなく、和音・アルペジオで表現)
+  function playSound(type, intensity){
     if(!soundOn) return;
     try{
       unlockAudio();
       if(!audioCtx) return;
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime;
       if(type==='place'){
-        o.type='sine'; o.frequency.value=440;
-        g.gain.setValueAtTime(0.09, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.12);
-        o.start(); o.stop(audioCtx.currentTime+0.13);
+        const o1 = audioCtx.createOscillator(), g1 = audioCtx.createGain();
+        o1.type='sine'; o1.frequency.setValueAtTime(520, t0); o1.frequency.exponentialRampToValueAtTime(300, t0+0.08);
+        g1.gain.setValueAtTime(0.10, t0); g1.gain.exponentialRampToValueAtTime(0.001, t0+0.09);
+        o1.connect(g1); g1.connect(audioCtx.destination); o1.start(t0); o1.stop(t0+0.1);
+        const o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain();
+        o2.type='triangle'; o2.frequency.setValueAtTime(780, t0);
+        g2.gain.setValueAtTime(0.045, t0); g2.gain.exponentialRampToValueAtTime(0.001, t0+0.05);
+        o2.connect(g2); g2.connect(audioCtx.destination); o2.start(t0); o2.stop(t0+0.06);
       } else if(type==='clear'){
-        o.type='triangle'; o.frequency.setValueAtTime(660, audioCtx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(990, audioCtx.currentTime+0.2);
-        g.gain.setValueAtTime(0.11, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.3);
-        o.start(); o.stop(audioCtx.currentTime+0.3);
+        const lvl = intensity||1;
+        const notes = lvl>=4 ? [523.25,659.25,783.99,1046.5] : lvl>=2 ? [523.25,659.25,783.99] : [523.25,659.25];
+        notes.forEach((freq,i)=>{
+          const start = t0 + i*0.055;
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.type='triangle'; o.frequency.setValueAtTime(freq, start);
+          g.gain.setValueAtTime(0.001, start);
+          g.gain.linearRampToValueAtTime(0.13, start+0.015);
+          g.gain.exponentialRampToValueAtTime(0.001, start+0.22);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(start); o.stop(start+0.23);
+        });
       } else if(type==='coin'){
-        o.type='square'; o.frequency.setValueAtTime(880, audioCtx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime+0.1);
-        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.18);
-        o.start(); o.stop(audioCtx.currentTime+0.18);
+        [1046.5, 1568].forEach((freq,i)=>{
+          const start = t0 + i*0.045;
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.type='sine'; o.frequency.setValueAtTime(freq, start);
+          g.gain.setValueAtTime(0.001, start);
+          g.gain.linearRampToValueAtTime(0.12, start+0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, start+0.18);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(start); o.stop(start+0.19);
+        });
+      } else if(type==='gameover'){
+        [392,329.63,261.63].forEach((freq,i)=>{
+          const start = t0 + i*0.12;
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.type='sine'; o.frequency.setValueAtTime(freq, start);
+          g.gain.setValueAtTime(0.11, start);
+          g.gain.exponentialRampToValueAtTime(0.001, start+0.35);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(start); o.stop(start+0.36);
+        });
+      } else if(type==='timer'){
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type='square'; o.frequency.setValueAtTime(880, t0);
+        g.gain.setValueAtTime(0.06, t0); g.gain.exponentialRampToValueAtTime(0.001, t0+0.08);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0+0.09);
       }
     }catch(err){}
   }
@@ -1851,6 +1967,8 @@
 
   // ===================== ゲームオーバー =====================
   function endGame(){
+    playSound('gameover');
+    stopTimeAttackTimer();
     dailyStats.gamesPlayed += 1;
     if(currentMode==='hard' || currentMode==='extreme') dailyStats.hardModeGamesPlayed = (dailyStats.hardModeGamesPlayed||0) + 1;
     saveDailyQuests();
@@ -1858,7 +1976,8 @@
     const earned = awardGameEndCoins();
     if(earned>0) playSound('coin');
     finalScoreEl.textContent = score;
-    newBestNoteEl.textContent = (score>=best && score>0) ? '🎉 ハイスコア更新！' : 'お疲れさまでした！';
+    const refBest = isRegularMode(currentMode) ? best : (bestScores[currentMode]||0);
+    newBestNoteEl.textContent = (score>=refBest && score>0) ? '🎉 ハイスコア更新！' : 'お疲れさまでした！';
     coinEarnedNoteEl.textContent = earned>0 ? `🪙 +${earned} コイン獲得！` : '';
     overlayEl.classList.add('show');
     // ゲーム終了時にサーバーへ送信（既にリアルタイムで送っているが、念のため）
@@ -1900,6 +2019,7 @@
     // ゲスト状態にリセット
     authToken = null;
     currentUserId = null;
+    clearAuthSession();
     // データ初期化
     bestScores = { soft:0, baked:0, hard:0, extreme:0 };
     best = 0;
@@ -2052,6 +2172,7 @@
         if(!r.ok) throw new Error(data.error || 'ログインに失敗しました。');
         authToken = data.token;
         currentUserId = data.id;
+        await saveAuthSession(authToken, currentUserId);
         // ログイン後、サーバーからデータ取得
         await syncFromServer();
         // ローカルに反映（syncFromServerでbestScores, coins, skinsなどが更新される）
@@ -2083,6 +2204,7 @@
         const data = await r.json();
         if(!r.ok) throw new Error(data.error || '登録に失敗しました。');
         authToken = data.token; currentUserId = data.id;
+        await saveAuthSession(authToken, currentUserId);
         // 新規登録時はデフォルトデータ
         bestScores = { soft:0, baked:0, hard:0, extreme:0 };
         coins = 0;
@@ -2163,46 +2285,50 @@
       const r = await fetch(`${API_BASE_URL}/api/sync`, { headers:{ 'Authorization':`Bearer ${authToken}` } });
       if(!r.ok) return;
       const data = await r.json();
-      // ベストスコア（モード別がある場合はそちらを優先）
-      if (data.bestScores && typeof data.bestScores === 'object') {
-        bestScores = { ...bestScores, ...data.bestScores };
-      } else if (data.bestScore !== undefined) {
-        // 互換性: 全体ベストのみの場合、現在のモードに設定（他のモードはそのまま）
-        bestScores[currentMode] = Math.max(bestScores[currentMode] || 0, data.bestScore);
-      }
-      tetrisBest = bestScores.tetris || 0;
-      if (currentMode === 'tetris') {
-        bestValEl.textContent = tetrisBest;
-      } else {
-        best = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
-        bestValEl.textContent = best;
-      }
-      saveBestScores();
-
-      if (data.coins !== undefined) {
-        coins = data.coins;
-        coinValEl.textContent = coins;
-        saveCoins(coins);
-      }
-      if (data.skins) {
-        ownedSkins = data.skins;
-        saveSkinsData();
-      }
-      if (data.equippedSkin) {
-        equippedSkin = data.equippedSkin;
-        applySkin(equippedSkin);
-        saveSkinsData();
-      }
-      if (data.playTime !== undefined) {
-        playTime = data.playTime;
-      }
-      // クエストはサーバーにあれば反映（他端末での進捗を引き継ぐ）
-      if (data.quests && data.quests.length && data.quests[0].poolId) {
-        activeQuests = data.quests;
-        ensureActiveQuests();
-        saveDailyQuests();
-      }
+      applySyncData(data);
     }catch(err){ console.warn('サーバーからの取得に失敗しました:', err.message); }
+  }
+
+  function applySyncData(data){
+    // ベストスコア（モード別がある場合はそちらを優先）
+    if (data.bestScores && typeof data.bestScores === 'object') {
+      bestScores = { ...bestScores, ...data.bestScores };
+    } else if (data.bestScore !== undefined) {
+      // 互換性: 全体ベストのみの場合、現在のモードに設定（他のモードはそのまま）
+      bestScores[currentMode] = Math.max(bestScores[currentMode] || 0, data.bestScore);
+    }
+    tetrisBest = bestScores.tetris || 0;
+    if (currentMode === 'tetris') {
+      bestValEl.textContent = tetrisBest;
+    } else {
+      best = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
+      bestValEl.textContent = best;
+    }
+    saveBestScores();
+
+    if (data.coins !== undefined) {
+      coins = data.coins;
+      coinValEl.textContent = coins;
+      saveCoins(coins);
+    }
+    if (data.skins) {
+      ownedSkins = data.skins;
+      saveSkinsData();
+    }
+    if (data.equippedSkin) {
+      equippedSkin = data.equippedSkin;
+      applySkin(equippedSkin);
+      saveSkinsData();
+    }
+    if (data.playTime !== undefined) {
+      playTime = data.playTime;
+    }
+    // クエストはサーバーにあれば反映（他端末での進捗を引き継ぐ）
+    if (data.quests && data.quests.length && data.quests[0].poolId) {
+      activeQuests = data.quests;
+      ensureActiveQuests();
+      saveDailyQuests();
+    }
   }
 
   // ===================== 管理者設定 =====================
@@ -3069,6 +3195,7 @@
   let tetrisScore = 0, tetrisLevel = 1, tetrisLines = 0, tetrisCombo = 0, tetrisBackToBack = false;
   let tetrisTimer = null, tetrisCellEls = [];
   let tetrisBest = 0;
+  let tetrisHoldType = null, tetrisHoldUsed = false;
 
   function rotateMatrixCW(m){
     const n = m.length;
@@ -3153,6 +3280,23 @@
     }
   }
 
+  function renderTetrisHold(){
+    tetrisHoldBoxEl.innerHTML = '';
+    tetrisHoldBoxEl.classList.toggle('used', tetrisHoldUsed);
+    if(!tetrisHoldType) return;
+    const def = TETROMINOES[tetrisHoldType];
+    const m = pad4x4(def.matrix);
+    for(let r=0;r<4;r++){
+      for(let c=0;c<4;c++){
+        const cell = document.createElement('div');
+        cell.className = 'tetris-next-cell';
+        if(m[r][c]) cell.style.background = COLORS[def.color].bg;
+        else cell.classList.add('empty');
+        tetrisHoldBoxEl.appendChild(cell);
+      }
+    }
+  }
+
   function renderTetris(){
     for(let r=0;r<TETRIS_ROWS;r++){
       for(let c=0;c<TETRIS_COLS;c++){
@@ -3171,6 +3315,7 @@
       paintTetrisPiece(tetrisPiece.matrix, tetrisPiece.row, tetrisPiece.col, tetrisPiece.color, false);
     }
     renderTetrisNext();
+    renderTetrisHold();
     tetrisLevelEl.textContent = tetrisLevel;
     tetrisLinesEl.textContent = tetrisLines;
   }
@@ -3260,6 +3405,28 @@
     tetrisLockPiece();
   }
 
+  // ===================== ホールド(テトリス99のように現在のピースを保持/交換) =====================
+  function tetrisHoldSwap(){
+    if(!tetrisActive || tetrisGameOver || !tetrisPiece || tetrisHoldUsed) return;
+    const currentType = tetrisPiece.type;
+    tetrisHoldUsed = true;
+    if(tetrisHoldType === null){
+      tetrisHoldType = currentType;
+      tetrisSpawnPiece(); // ネクストから補充(ホールドが空の場合)
+    } else {
+      const swapType = tetrisHoldType;
+      tetrisHoldType = currentType;
+      const def = TETROMINOES[swapType];
+      const matrix = def.matrix.map(row=>row.slice());
+      const col = Math.floor((TETRIS_COLS - matrix.length)/2);
+      if(tetrisCollides(matrix, -1, col)){ tetrisTriggerGameOver(); return; }
+      tetrisPiece = { type:swapType, matrix, color:def.color, row:-1, col };
+      renderTetris();
+      tetrisStartLoop();
+    }
+    renderTetrisHold();
+  }
+
   function showTetrisCombo(msg, cls){
     tetrisComboTextEl.textContent = msg;
     tetrisComboTextEl.className = 'combo-text show' + (cls ? (' '+cls) : '');
@@ -3297,6 +3464,7 @@
 
   function tetrisLockPiece(){
     tetrisStopLoop();
+    tetrisHoldUsed = false; // 新しいピースになったのでホールドをまた使えるようにする
     const { matrix, row, col, color } = tetrisPiece;
     let offBoard = false;
     for(let r=0;r<matrix.length;r++){
@@ -3338,7 +3506,7 @@
       if(tetrisCombo>1) msg += ` ${tetrisCombo}コンボ!`;
       msg += ` +${gained}`;
       showTetrisCombo(msg, isTetris4 ? 'mega' : (tetrisCombo>1 ? 'bonus' : ''));
-      playSound(isTetris4 ? 'clear' : 'clear');
+      playSound('clear', isTetris4 ? 4 : cleared.length);
       if(tetrisCombo>=3) playSound('coin');
 
       tetrisClearRowsAnimated(cleared, ()=>{
@@ -3358,6 +3526,7 @@
     tetrisGameOver = true;
     tetrisActive = false;
     tetrisStopLoop();
+    playSound('gameover');
     const earned = Math.max(0, Math.floor(tetrisScore/40));
     if(earned>0){
       coins += earned;
@@ -3385,10 +3554,12 @@
     tetrisGrid = Array.from({length:TETRIS_ROWS}, ()=>new Array(TETRIS_COLS).fill(-1));
     tetrisScore = 0; tetrisLevel = 1; tetrisLines = 0; tetrisCombo = 0; tetrisBackToBack = false;
     tetrisGameOver = false; tetrisActive = true; tetrisBag = [];
+    tetrisHoldType = null; tetrisHoldUsed = false;
     tetrisNextType = tetrisRandomType();
     initTetrisBoard();
     scoreValEl.textContent = '0';
     bestValEl.textContent = tetrisBest;
+    renderTetrisHold();
     tetrisSpawnPiece();
   }
 
@@ -3431,12 +3602,15 @@
   // ===================== テトリス操作(キーボード) =====================
   document.addEventListener('keydown', (e)=>{
     if(currentMode!=='tetris' || !tetrisActive || tetrisGameOver) return;
-    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
-    if(e.key==='ArrowLeft') tetrisMove(-1);
-    else if(e.key==='ArrowRight') tetrisMove(1);
-    else if(e.key==='ArrowUp') tetrisRotate();
-    else if(e.key==='ArrowDown') tetrisSoftDrop();
-    else if(e.key===' ') tetrisHardDrop();
+    const key = e.key.toLowerCase();
+    if(['arrowleft','arrowright','arrowup','arrowdown',' ','a','d','w','s','q'].includes(key)) e.preventDefault();
+    // 十字キーに加えて、片手操作しやすいようWASDにも対応。ホールドはQ。
+    if(key==='arrowleft' || key==='a') tetrisMove(-1);
+    else if(key==='arrowright' || key==='d') tetrisMove(1);
+    else if(key==='arrowup' || key==='w') tetrisRotate();
+    else if(key==='arrowdown' || key==='s') tetrisSoftDrop();
+    else if(key===' ') tetrisHardDrop();
+    else if(key==='q') tetrisHoldSwap();
   });
 
   // ===================== テトリス操作(タッチ/タップ・iPad対応) =====================
@@ -3462,10 +3636,32 @@
   bindTetrisHoldButton(tBtnSoftEl, ()=>tetrisSoftDrop());
   tBtnRotateEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisRotate(); });
   tBtnHardEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisHardDrop(); });
+  tBtnHoldEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisHoldSwap(); });
   tetrisBoardEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); tetrisRotate(); });
   // ズームや長押しでの範囲選択・コピーメニューが出ないように抑制
   tetrisWrapEl.addEventListener('contextmenu', (e)=>e.preventDefault());
   tetrisWrapEl.addEventListener('selectstart', (e)=>e.preventDefault());
+
+  // ===================== 操作説明パネル =====================
+  tetrisHelpPanelEl.innerHTML = `
+    <b>🎮 操作説明</b>
+    ◀▶：左右移動<br>
+    ⟳：回転<br>
+    ▼：ソフトドロップ<br>
+    ⤓：ハードドロップ<br>
+    ⇄ HOLD：ピースを保持/交換<br>
+    <b style="margin-top:8px;">⌨️ キーボード</b>
+    ← → / A D：移動<br>
+    ↑ / W：回転<br>
+    ↓ / S：ソフトドロップ<br>
+    スペース：ハードドロップ<br>
+    Q：ホールド
+  `;
+  tetrisHelpBtnEl.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    tetrisHelpPanelEl.classList.toggle('show');
+  });
 
   // ===================== サーバーお知らせ(管理者コマンド /announce の配信を表示) =====================
   const STORAGE_LAST_ANNOUNCEMENT = 'candyblast-last-announcement-v1';
