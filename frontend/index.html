@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>睡眠ブリッツ</title>
+<title>わんだぶろりー</title>
 <meta name="app-version" content="2026.09.05-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -25,6 +25,35 @@
     -webkit-text-size-adjust: 100%;
   }
   img, canvas, video, iframe { max-width:100%; touch-action:none; }
+  #titleScreen{ position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% -10%, var(--bg-deep2), var(--bg-deep) 60%); padding:20px;
+    padding-top:max(20px, env(safe-area-inset-top)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
+  #titleScreen.hidden{ display:none; }
+  .title-card{ width:100%; max-width:340px; background:var(--panel); border-radius:24px; padding:28px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.08); text-align:center; }
+  .title-logo{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px;
+    background:linear-gradient(90deg,var(--gold),var(--coral)); -webkit-background-clip:text; background-clip:text;
+    color:transparent; margin-bottom:4px; }
+  .title-sub{ font-size:11px; color:var(--text-dim); letter-spacing:3px; margin-bottom:26px; }
+  .title-menu-btn{ display:block; width:100%; padding:14px 0; margin-bottom:10px; border-radius:14px; border:none;
+    background:var(--panel-light); color:var(--text); font-size:15px; font-weight:800; cursor:pointer;
+    font-family:'Nunito',sans-serif; }
+  .title-menu-btn.primary{ background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2a1730; }
+  .title-menu-btn:active{ transform:scale(0.97); }
+  .title-version-row{ margin-top:12px; display:flex; justify-content:space-between; align-items:center;
+    font-size:10.5px; color:var(--text-dim); }
+  .title-version-row button{ background:none; border:none; color:var(--mint); font-size:10.5px; font-weight:800; cursor:pointer; }
+  #versionBadge{ position:fixed; right:10px; bottom:max(10px, env(safe-area-inset-bottom)); z-index:600;
+    background:var(--panel-light); color:var(--text-dim); font-size:10px; font-weight:700; padding:6px 10px;
+    border-radius:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); }
+  #versionBadge:active{ background:var(--purple); }
+  #changelogPanel{ position:fixed; right:10px; bottom:44px; z-index:600; width:min(280px, 82vw);
+    max-height:50vh; overflow-y:auto; background:var(--panel); border-radius:14px; padding:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.08); display:none; }
+  #changelogPanel.show{ display:block; }
+  #changelogPanel h4{ margin:0 0 8px; color:var(--gold); font-size:13px; }
+  #changelogPanel .cl-entry{ font-size:11.5px; color:var(--text-dim); margin-bottom:8px; line-height:1.6; }
+  #changelogPanel .cl-entry b{ color:var(--text); display:block; margin-bottom:2px; }
   #app{ display:flex; flex-direction:column; align-items:center; height:100%; width:100%;
     padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); gap:8px; }
   header{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:4px 6px; gap:8px; flex-wrap:wrap; row-gap:6px; }
@@ -66,6 +95,9 @@
   .score-card .value{ font-family:'Baloo 2', sans-serif; font-size:clamp(18px,4.6vw,24px); font-weight:700; color:var(--gold); line-height:1.2; }
   .score-card.best .value{ color:var(--mint); }
   .score-card.coins .value{ color:var(--gold); }
+  .score-card.timer .value{ color:var(--coral); }
+  .score-card.timer.urgent .value{ color:#FF3355; animation:pulseUrgent 0.6s ease-in-out infinite; }
+  @keyframes pulseUrgent{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
 
   #board-wrap{ position:relative; width:min(90vw, 54vh, 460px); aspect-ratio:1/1; }
   #board{ position:relative; width:100%; height:100%; display:grid; grid-template-columns:repeat(8,1fr);
@@ -192,6 +224,28 @@
   .auth-msg.error{ color:var(--coral); }
   .auth-msg.ok{ color:var(--mint); }
   .close-x{ position:absolute; top:14px; right:16px; font-size:20px; color:var(--text-dim); cursor:pointer; background:none; border:none; }
+
+  .records-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .record-box{ background:var(--panel-light); border-radius:14px; padding:10px; text-align:center; }
+  .record-box .rlabel{ font-size:10px; color:var(--text-dim); font-weight:700; margin-bottom:4px; }
+  .record-box .rval{ font-family:'Baloo 2',sans-serif; font-size:19px; font-weight:800; color:var(--gold); }
+  .achievement-item{ display:flex; align-items:center; gap:10px; background:var(--panel-light); border-radius:12px;
+    padding:10px 12px; margin-bottom:8px; opacity:0.55; }
+  .achievement-item.done{ opacity:1; }
+  .ach-icon{ font-size:18px; flex-shrink:0; }
+  .ach-label{ font-weight:800; font-size:13px; }
+  .ach-desc{ font-size:10.5px; color:var(--text-dim); }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel-light);
+    border-radius:14px; padding:12px 14px; margin-bottom:10px; font-size:14px; font-weight:700; }
+  .settings-row input[type="range"]{ width:120px; }
+  .switch{ position:relative; display:inline-block; width:42px; height:24px; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch-slider{ position:absolute; cursor:pointer; inset:0; background:var(--bg-deep2); border-radius:24px; transition:0.2s; }
+  .switch-slider::before{ content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px;
+    background:white; border-radius:50%; transition:0.2s; }
+  .switch input:checked + .switch-slider{ background:var(--mint); }
+  .switch input:checked + .switch-slider::before{ transform:translateX(18px); }
+  .ghost-btn.danger{ background:rgba(255,80,80,0.12); border:1px solid rgba(255,80,80,0.35); color:#FF7A7A; }
 
   .quest-item{ background:var(--panel-light); border-radius:14px; padding:12px; text-align:left; margin-bottom:10px; }
   .quest-item .qtitle{ font-weight:700; font-size:14px; margin-bottom:6px; }
@@ -375,10 +429,28 @@
 </style>
 </head>
 <body>
+<div id="titleScreen" class="title-screen">
+  <div class="title-card">
+    <div class="title-logo">🍬 キャンディブラスト</div>
+    <div class="title-sub">CANDY BLAST</div>
+    <button class="title-menu-btn primary" id="titleStartBtn">▶ ゲーム開始</button>
+    <button class="title-menu-btn" id="titleTimeAttackBtn">⏱ タイムアタック</button>
+    <button class="title-menu-btn" id="titleRecordsBtn">🏆 記録・実績</button>
+    <button class="title-menu-btn" id="titleSettingsBtn">⚙ 設定</button>
+    <div class="title-version-row">
+      <span>Ver. 2.0.0</span>
+      <button id="titleChangelogBtn">📢 更新履歴</button>
+    </div>
+  </div>
+</div>
+
+<div id="versionBadge">Ver. 2.0.0</div>
+<div id="changelogPanel"></div>
+
 <div id="app">
   <header>
     <div class="title-wrap">
-      <div class="title" id="backButton"><span class="back-arrow">←</span> 戻る</div>
+      <div class="title" id="backButton">🏠 メニューに戻る</div>
       <div class="mode-badge" id="modeBadge"></div>
     </div>
     <div class="header-right">
@@ -405,6 +477,7 @@
     <div class="score-card"><div class="label">score</div><div class="value" id="scoreVal">0</div></div>
     <div class="score-card best"><div class="label">best</div><div class="value" id="bestVal">0</div></div>
     <div class="score-card coins"><div class="label">🪙 coin</div><div class="value" id="coinVal">0</div></div>
+    <div class="score-card timer" id="timeAttackCard" style="display:none;"><div class="label">⏱ time</div><div class="value" id="timeAttackVal">0:60</div></div>
   </div>
 
   <div id="board-wrap">
@@ -454,6 +527,7 @@
     <div class="final-score" id="finalScore">0</div>
     <div class="sub" id="newBestNote">お疲れさまでした！</div>
     <div class="sub" id="coinEarnedNote" style="color:var(--gold); font-weight:700;"></div>
+    <div class="sub" id="duelResultNote" style="color:var(--mint); font-weight:800; margin-top:6px;"></div>
     <button class="primary-btn" id="restartBtn">もう一度</button>
   </div>
 </div>
@@ -478,8 +552,8 @@
   // ===================== 戻るボタン =====================
   document.getElementById('backButton').addEventListener('click', function(e) {
     e.preventDefault();
-    if (confirm('本当に戻りますか？\nゲームの進行は保存されません。')) {
-      window.location.href = 'https://my-link-portal.onrender.com';
+    if (confirm('メニューに戻りますか？\n現在のゲームの進行は保存されません。')) {
+      showTitleScreen();
     }
   });
 
@@ -882,11 +956,14 @@
   const scoreValEl = document.getElementById('scoreVal');
   const bestValEl = document.getElementById('bestVal');
   const coinValEl = document.getElementById('coinVal');
+  const timeAttackCardEl = document.getElementById('timeAttackCard');
+  const timeAttackValEl = document.getElementById('timeAttackVal');
   const comboTextEl = document.getElementById('comboText');
   const overlayEl = document.getElementById('overlay');
   const finalScoreEl = document.getElementById('finalScore');
   const newBestNoteEl = document.getElementById('newBestNote');
   const coinEarnedNoteEl = document.getElementById('coinEarnedNote');
+  const duelResultNoteEl = document.getElementById('duelResultNote');
   const restartBtn = document.getElementById('restartBtn');
   const soundBtn = document.getElementById('soundBtn');
   const questBtn = document.getElementById('questBtn');
@@ -908,6 +985,43 @@
   let board = [], cellEls = [], tray = [];
   let score = 0, best = 0, coins = 0, streak = 0, noClearStreak = 0;
   let soundOn = true;
+  let soundVolume = 1;
+  let darkMode = true;
+  const STORAGE_APPSETTINGS = 'candyblast-appsettings-v1';
+  async function loadAppSettings(){
+    try{
+      const res = await window.storage.get(STORAGE_APPSETTINGS, false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(typeof parsed.soundVolume === 'number') soundVolume = parsed.soundVolume;
+        if(typeof parsed.darkMode === 'boolean') darkMode = parsed.darkMode;
+        if(typeof parsed.soundOn === 'boolean') soundOn = parsed.soundOn;
+      }
+    }catch(err){}
+    applyDarkMode();
+  }
+  async function saveAppSettings(){
+    try{ await window.storage.set(STORAGE_APPSETTINGS, JSON.stringify({soundVolume, darkMode, soundOn}), false); }catch(err){}
+  }
+  function applyDarkMode(){
+    if(darkMode){
+      document.documentElement.style.removeProperty('--bg-deep');
+      document.documentElement.style.removeProperty('--bg-deep2');
+      document.documentElement.style.removeProperty('--panel');
+      document.documentElement.style.removeProperty('--panel-light');
+      document.documentElement.style.removeProperty('--text');
+      document.documentElement.style.removeProperty('--text-dim');
+      applySkin(equippedSkin || 'default');
+    } else {
+      // ライトモード: 明るい配色に切り替え(ブロックの色自体はスキンのまま)
+      document.documentElement.style.setProperty('--bg-deep', '#EDE7F6');
+      document.documentElement.style.setProperty('--bg-deep2', '#F5F1FA');
+      document.documentElement.style.setProperty('--panel', '#FFFFFF');
+      document.documentElement.style.setProperty('--panel-light', '#F1EDF9');
+      document.documentElement.style.setProperty('--text', '#2A1E38');
+      document.documentElement.style.setProperty('--text-dim', '#8A7B9C');
+    }
+  }
   let dragState = null;
 
   let adminDisabledBlocks = [];
@@ -1049,8 +1163,56 @@
 
   function updateModeBadge(){
     if(currentMode==='tetris'){ modeBadgeEl.textContent = '🧱 テトリス'; return; }
+    if(currentMode==='timeattack'){ modeBadgeEl.textContent = '⏱ タイムアタック'; return; }
     const m = MODES[currentMode];
     if(m) modeBadgeEl.textContent = `${m.emoji} ${m.label} · ${SIZE}×${SIZE}`;
+  }
+
+  // ===================== タイムアタックモード =====================
+  const TIME_ATTACK_DURATION = 60; // 秒
+  let timeAttackTimeLeft = 0;
+  let timeAttackInterval = null;
+
+  function updateTimeAttackDisplay(){
+    const m = Math.floor(Math.max(0,timeAttackTimeLeft)/60);
+    const s = Math.max(0,timeAttackTimeLeft) % 60;
+    timeAttackValEl.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    timeAttackCardEl.classList.toggle('urgent', timeAttackTimeLeft<=10);
+  }
+
+  function stopTimeAttackTimer(){
+    if(timeAttackInterval){ clearInterval(timeAttackInterval); timeAttackInterval = null; }
+    timeAttackCardEl.style.display = 'none';
+  }
+
+  function startTimeAttackTimer(){
+    stopTimeAttackTimer();
+    timeAttackTimeLeft = TIME_ATTACK_DURATION;
+    timeAttackCardEl.style.display = 'flex';
+    updateTimeAttackDisplay();
+    timeAttackInterval = setInterval(()=>{
+      timeAttackTimeLeft--;
+      updateTimeAttackDisplay();
+      if(timeAttackTimeLeft<=5 && timeAttackTimeLeft>0) playSound('timer');
+      if(timeAttackTimeLeft<=0){
+        stopTimeAttackTimer();
+        endGame();
+      }
+    }, 1000);
+  }
+
+  function startTimeAttackMode(){
+    if(currentMode==='tetris') exitTetrisMode();
+    currentMode = 'timeattack';
+    SIZE = 8;
+    saveSettings();
+    updateModeBadge();
+    overlayEl.classList.remove('show');
+    score = 0; streak = 0; noClearStreak = 0;
+    updateScoreUI();
+    initBoard();
+    fillTray();
+    startTimeAttackTimer();
   }
 
   function applyMode(mode, size){
@@ -1058,7 +1220,12 @@
       enterTetrisMode();
       return;
     }
+    if(mode==='timeattack'){
+      startTimeAttackMode();
+      return;
+    }
     if(currentMode==='tetris') exitTetrisMode();
+    if(currentMode==='timeattack') stopTimeAttackTimer();
     currentMode = MODES[mode] ? mode : 'baked';
     SIZE = (currentMode==='extreme') ? 8 : Math.min(18, Math.max(5, size||8));
     saveSettings();
@@ -1672,6 +1839,107 @@
     });
   }
 
+  // ===================== 記録・実績 =====================
+  function buildAchievements(){
+    return [
+      { label:'はじめの一歩', done: (dailyStats.gamesPlayed||0)>=1, desc:'ゲームを1回プレイする' },
+      { label:'ライン職人', done: (dailyStats.linesCleared||0)>=100, desc:'ラインを合計100本消す' },
+      { label:'コンボマスター', done: (dailyStats.maxComboStreak||0)>=8, desc:'コンボを8連続つなげる' },
+      { label:'トリプルクリア', done: (dailyStats.tripleClearCount||0)>=1, desc:'3ライン以上同時に消す' },
+      { label:'硬派プレイヤー', done: (dailyStats.hardModeGamesPlayed||0)>=5, desc:'「硬い」以上の難易度を5回プレイ' },
+      { label:'テトリスマスター', done: (tetrisBest||0)>=5000, desc:'テトリスモードで5000点以上を出す' },
+      { label:'タイムアタック挑戦者', done: (bestScores.timeattack||0)>=1000, desc:'タイムアタックで1000点以上を出す' },
+      { label:'クエストマニア', done: (questsCompletedCount||0)>=10, desc:'エンドレスクエストを10個クリアする' },
+      { label:'コレクター', done: (ownedSkins||[]).length>=5, desc:'スキンを5個以上入手する' }
+    ];
+  }
+
+  function renderRecordsModal(){
+    modalContent.dataset.mode = 'records';
+    const achievements = buildAchievements();
+    const doneCount = achievements.filter(a=>a.done).length;
+    let html = `
+      <h2 style="color:var(--gold);">🏆 記録・実績</h2>
+      <div class="sub" style="margin-bottom:10px;">これまでのプレイ記録と実績の達成状況です。</div>
+      <div class="records-grid">
+        <div class="record-box"><div class="rlabel">🏆 通常モード最高</div><div class="rval">${best}</div></div>
+        <div class="record-box"><div class="rlabel">⏱ タイムアタック最高</div><div class="rval">${bestScores.timeattack||0}</div></div>
+        <div class="record-box"><div class="rlabel">🧱 テトリス最高</div><div class="rval">${tetrisBest||0}</div></div>
+        <div class="record-box"><div class="rlabel">🔥 最大コンボ</div><div class="rval">${dailyStats.maxComboStreak||0}</div></div>
+        <div class="record-box"><div class="rlabel">💥 累計消去ライン</div><div class="rval">${dailyStats.linesCleared||0}</div></div>
+        <div class="record-box"><div class="rlabel">🎮 総プレイ回数</div><div class="rval">${dailyStats.gamesPlayed||0}</div></div>
+        <div class="record-box"><div class="rlabel">📊 総スコア</div><div class="rval">${dailyStats.scoreEarned||0}</div></div>
+        <div class="record-box"><div class="rlabel">🧩 設置ピース数</div><div class="rval">${dailyStats.piecesPlaced||0}</div></div>
+      </div>
+      <h3 style="color:var(--mint); margin:14px 0 8px;">🎯 実績（${doneCount}/${achievements.length}）</h3>
+      ${achievements.map(a=>`
+        <div class="achievement-item ${a.done?'done':''}">
+          <span class="ach-icon">${a.done?'✅':'🔒'}</span>
+          <div><div class="ach-label">${a.label}</div><div class="ach-desc">${a.desc}</div></div>
+        </div>`).join('')}
+    `;
+    modalContent.innerHTML = html;
+  }
+
+  // ===================== 設定(アプリ全体) =====================
+  function renderAppSettingsModal(){
+    modalContent.dataset.mode = 'appsettings';
+    modalContent.innerHTML = `
+      <h2 style="color:var(--gold);">⚙ 設定</h2>
+      <div class="settings-row">
+        <span>🔊 音量</span>
+        <input type="range" id="volumeSlider" min="0" max="100" value="${Math.round(soundVolume*100)}">
+      </div>
+      <div class="settings-row">
+        <span>🌙 ダークモード</span>
+        <label class="switch"><input type="checkbox" id="darkModeToggle" ${darkMode?'checked':''}><span class="switch-slider"></span></label>
+      </div>
+      <div class="settings-row" id="settingsAccountRow" style="cursor:pointer;">
+        <span>👤 アカウント</span><span class="sub">${currentUserId ? currentUserId : 'ゲスト'} ›</span>
+      </div>
+      <button class="ghost-btn danger" id="dataResetBtn" style="width:100%; margin-top:8px;">🗑 データリセット</button>
+    `;
+    document.getElementById('volumeSlider').addEventListener('input', (e)=>{
+      soundVolume = parseInt(e.target.value,10)/100;
+      saveAppSettings();
+    });
+    document.getElementById('volumeSlider').addEventListener('change', ()=> playSound('coin'));
+    document.getElementById('darkModeToggle').addEventListener('change', (e)=>{
+      darkMode = e.target.checked;
+      applyDarkMode();
+      saveAppSettings();
+    });
+    document.getElementById('settingsAccountRow').addEventListener('click', ()=>{
+      closeModal();
+      accountBtn.click();
+    });
+    document.getElementById('dataResetBtn').addEventListener('click', confirmDataReset);
+  }
+
+  function confirmDataReset(){
+    const name = currentUserId || 'ゲスト';
+    const typed = prompt(`⚠️「${name}」のデータを削除します。\nこの操作は取り消せません。よろしければ、確認のためアカウント名「${name}」を正確に入力してください。`);
+    if(typed === null) return;
+    if(typed !== name){ alert('入力内容が一致しなかったため、キャンセルしました。'); return; }
+    performDataReset();
+  }
+
+  async function performDataReset(){
+    bestScores = { soft:0, baked:0, hard:0, extreme:0, tetris:0, timeattack:0 };
+    best = 0; tetrisBest = 0;
+    dailyStats = { ...DAILY_STATS_DEFAULT };
+    questsCompletedCount = 0; activeQuests = [];
+    ensureActiveQuests();
+    coins = 0;
+    ownedSkins = ['default']; equippedSkin = 'default';
+    saveBestScores(); saveDailyQuests(); saveCoins(0); saveSkinsData();
+    applySkin('default');
+    updateScoreUI(); updateCoinUI();
+    if(authToken) await syncToServer();
+    alert('データをリセットしました。');
+    renderAppSettingsModal();
+  }
+
   // ===================== スキン =====================
   function buildPatternedColors(baseColors, patternKey){
     if(!patternKey || !PATTERN_LAYERS[patternKey]) return baseColors;
@@ -1736,6 +2004,7 @@
       const res = await window.storage.get(STORAGE_SETTINGS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
+        // タイムアタックはセッション的なモードなので、リロード時は自動再開せず通常モードに戻す
         currentMode = (MODES[parsed.mode] || parsed.mode==='tetris') ? parsed.mode : 'baked';
         SIZE = (currentMode==='extreme') ? 8 : Math.min(18, Math.max(5, parsed.size||8));
         isFirstTime = false;
@@ -1763,11 +2032,23 @@
         <div class="mode-card-head"><span class="mode-emoji">🧱</span><span>テトリス</span>
           <span class="coin-tag">NEW</span></div>
       </div>`;
+    const taSelected = pendingMode === 'timeattack';
+    html += `
+      <div class="mode-card ${taSelected?'selected':''}" data-mode="timeattack">
+        <div class="mode-card-head"><span class="mode-emoji">⏱</span><span>タイムアタック</span>
+          <span class="coin-tag">NEW</span></div>
+      </div>`;
 
     if(pendingMode === 'tetris'){
       html += `
         <div class="sub" style="margin:8px 0;">クラシックなテトリス。スマホ・iPadでもタップ操作でプレイ可能。ライン消去やコンボで得点が爆上がりします！</div>
         <button class="primary-btn" id="applyModeBtn">テトリスを始める</button>`;
+      return html;
+    }
+    if(pendingMode === 'timeattack'){
+      html += `
+        <div class="sub" style="margin:8px 0;">制限時間${TIME_ATTACK_DURATION}秒でどれだけ高得点を出せるか挑戦！通常モードとは別にハイスコアが記録されます。</div>
+        <button class="primary-btn" id="applyModeBtn">タイムアタックを始める</button>`;
       return html;
     }
 
@@ -1902,20 +2183,23 @@
   }
   // より満足感のあるサウンド(単純な音量アップではなく、和音・アルペジオで表現)
   function playSound(type, intensity){
-    if(!soundOn) return;
+    if(!soundOn || soundVolume<=0) return;
     try{
       unlockAudio();
       if(!audioCtx) return;
       const t0 = audioCtx.currentTime;
+      const master = audioCtx.createGain();
+      master.gain.value = soundVolume;
+      master.connect(audioCtx.destination);
       if(type==='place'){
         const o1 = audioCtx.createOscillator(), g1 = audioCtx.createGain();
         o1.type='sine'; o1.frequency.setValueAtTime(520, t0); o1.frequency.exponentialRampToValueAtTime(300, t0+0.08);
         g1.gain.setValueAtTime(0.10, t0); g1.gain.exponentialRampToValueAtTime(0.001, t0+0.09);
-        o1.connect(g1); g1.connect(audioCtx.destination); o1.start(t0); o1.stop(t0+0.1);
+        o1.connect(g1); g1.connect(master); o1.start(t0); o1.stop(t0+0.1);
         const o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain();
         o2.type='triangle'; o2.frequency.setValueAtTime(780, t0);
         g2.gain.setValueAtTime(0.045, t0); g2.gain.exponentialRampToValueAtTime(0.001, t0+0.05);
-        o2.connect(g2); g2.connect(audioCtx.destination); o2.start(t0); o2.stop(t0+0.06);
+        o2.connect(g2); g2.connect(master); o2.start(t0); o2.stop(t0+0.06);
       } else if(type==='clear'){
         const lvl = intensity||1;
         const notes = lvl>=4 ? [523.25,659.25,783.99,1046.5] : lvl>=2 ? [523.25,659.25,783.99] : [523.25,659.25];
@@ -1926,7 +2210,7 @@
           g.gain.setValueAtTime(0.001, start);
           g.gain.linearRampToValueAtTime(0.13, start+0.015);
           g.gain.exponentialRampToValueAtTime(0.001, start+0.22);
-          o.connect(g); g.connect(audioCtx.destination);
+          o.connect(g); g.connect(master);
           o.start(start); o.stop(start+0.23);
         });
       } else if(type==='coin'){
@@ -1937,7 +2221,7 @@
           g.gain.setValueAtTime(0.001, start);
           g.gain.linearRampToValueAtTime(0.12, start+0.01);
           g.gain.exponentialRampToValueAtTime(0.001, start+0.18);
-          o.connect(g); g.connect(audioCtx.destination);
+          o.connect(g); g.connect(master);
           o.start(start); o.stop(start+0.19);
         });
       } else if(type==='gameover'){
@@ -1947,14 +2231,14 @@
           o.type='sine'; o.frequency.setValueAtTime(freq, start);
           g.gain.setValueAtTime(0.11, start);
           g.gain.exponentialRampToValueAtTime(0.001, start+0.35);
-          o.connect(g); g.connect(audioCtx.destination);
+          o.connect(g); g.connect(master);
           o.start(start); o.stop(start+0.36);
         });
       } else if(type==='timer'){
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type='square'; o.frequency.setValueAtTime(880, t0);
         g.gain.setValueAtTime(0.06, t0); g.gain.exponentialRampToValueAtTime(0.001, t0+0.08);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0+0.09);
+        o.connect(g); g.connect(master); o.start(t0); o.stop(t0+0.09);
       }
     }catch(err){}
   }
@@ -1979,6 +2263,16 @@
     const refBest = isRegularMode(currentMode) ? best : (bestScores[currentMode]||0);
     newBestNoteEl.textContent = (score>=refBest && score>0) ? '🎉 ハイスコア更新！' : 'お疲れさまでした！';
     coinEarnedNoteEl.textContent = earned>0 ? `🪙 +${earned} コイン獲得！` : '';
+    duelResultNoteEl.textContent = '';
+    if(currentDuelId){
+      const duelId = currentDuelId;
+      currentDuelId = null;
+      duelResultNoteEl.textContent = '対決の結果を送信中...';
+      submitDuelScore(duelId, score).then(duel=>{
+        if(duel) duelResultNoteEl.textContent = duelResultText(duel);
+        else duelResultNoteEl.textContent = '対決結果の送信に失敗しました。';
+      });
+    }
     overlayEl.classList.add('show');
     // ゲーム終了時にサーバーへ送信（既にリアルタイムで送っているが、念のため）
     if (authToken) syncToServer();
@@ -2846,6 +3140,8 @@
   let dmPerFriendUnread = {};
   let friendsBgPollInterval = null;
   let chatBgPollInterval = null;
+  let duelsList = [];
+  let currentDuelId = null;
 
   function startBackgroundPolling(){
     stopBackgroundPolling();
@@ -2950,6 +3246,78 @@
     } catch (err) { /* 無視 */ }
   }
 
+  // ===================== 🆕 フレンド対決(タイムアタックで勝負) =====================
+  async function fetchDuelsList(){
+    if (!authToken) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/duels/list`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      duelsList = data.duels || [];
+    } catch (err) { /* 無視 */ }
+  }
+
+  async function challengeFriend(opponentId){
+    if (!authToken) { alert('ログインが必要です'); return; }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/duels/challenge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ opponentId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '対決の申し込みに失敗しました');
+      await fetchDuelsList();
+      renderFriendsModal('duels');
+    } catch (err) { alert(err.message); }
+  }
+
+  async function respondDuel(duelId, accept){
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/duels/${duelId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ accept })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '処理に失敗しました');
+      await fetchDuelsList();
+      renderFriendsModal('duels');
+    } catch (err) { alert(err.message); }
+  }
+
+  function playDuel(duel){
+    currentDuelId = duel.id;
+    closeModal();
+    startTimeAttackMode();
+  }
+
+  async function submitDuelScore(duelId, finalScore){
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/duels/${duelId}/submit-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ score: finalScore })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      return data.duel;
+    } catch (err) { return null; }
+  }
+
+  function duelResultText(duel){
+    const isChallenger = duel.challenger_id === currentUserId;
+    const myScore = isChallenger ? duel.challenger_score : duel.opponent_score;
+    const oppScore = isChallenger ? duel.opponent_score : duel.challenger_score;
+    const oppId = isChallenger ? duel.opponent_id : duel.challenger_id;
+    if (duel.status !== 'completed') return `対 ${oppId}：相手の結果を待っています…`;
+    if (myScore > oppScore) return `🏆 対 ${oppId} に勝利！（自分 ${myScore} - 相手 ${oppScore}）`;
+    if (myScore < oppScore) return `😢 対 ${oppId} に敗北…（自分 ${myScore} - 相手 ${oppScore}）`;
+    return `🤝 対 ${oppId} と引き分け（${myScore} - ${oppScore}）`;
+  }
+
   async function removeFriendFn(friendId){
     if (!confirm(`${friendId} をフレンドから削除しますか？\nDMの履歴は残りますが、再度フレンドになるまで送信できません。`)) return;
     try {
@@ -2995,6 +3363,7 @@
         <button class="tab-btn ${tab==='friends'?'active':''}" data-ftab="friends">フレンド</button>
         <button class="tab-btn ${tab==='requests'?'active':''}" data-ftab="requests">リクエスト${incomingRequests.length?` (${incomingRequests.length})`:''}</button>
         <button class="tab-btn ${tab==='dm'?'active':''}" data-ftab="dm">DM</button>
+        <button class="tab-btn ${tab==='duels'?'active':''}" data-ftab="duels">⚔️ 対決</button>
       </div>
       <div id="friendsTabBody">`;
 
@@ -3015,10 +3384,48 @@
                 <span class="online-dot ${f.online ? 'on' : 'off'}"></span>${f.id}${unread ? `<span class="funread">${unread}</span>` : ''}
               </span>
               <span class="fsub">${f.online ? '🟢 オンライン' : 'オフライン'}</span>
+              <button class="fbtn" data-challenge="${f.id}">⚔️ 対決</button>
               <button class="fbtn remove" data-removefriend="${f.id}">削除</button>
             </div>`;
         });
       }
+    } else if (tab === 'duels') {
+      const pendingIncoming = duelsList.filter(d => d.status==='pending' && d.opponent_id===currentUserId);
+      const pendingOutgoing = duelsList.filter(d => d.status==='pending' && d.challenger_id===currentUserId);
+      const playable = duelsList.filter(d => d.status==='accepted' &&
+        ((d.challenger_id===currentUserId && d.challenger_score===null) || (d.opponent_id===currentUserId && d.opponent_score===null)));
+      const waiting = duelsList.filter(d => d.status==='accepted' &&
+        ((d.challenger_id===currentUserId && d.challenger_score!==null) || (d.opponent_id===currentUserId && d.opponent_score!==null)));
+      const completed = duelsList.filter(d => d.status==='completed');
+      html += `<div class="sub" style="margin-bottom:8px;">タイムアタック(${TIME_ATTACK_DURATION}秒)でフレンドと勝負！フレンド一覧の「⚔️対決」から挑戦できます。</div>`;
+      html += `<div class="qtitle" style="margin:10px 0 6px;">📥 届いている挑戦</div>`;
+      html += pendingIncoming.length===0 ? `<div class="empty-hint">届いている挑戦はありません。</div>` :
+        pendingIncoming.map(d=>`
+          <div class="friend-item pending">
+            <span class="fname">⚔️ ${d.challenger_id}</span>
+            <button class="fbtn accept" data-duelaccept="${d.id}">受ける</button>
+            <button class="fbtn decline" data-dueldecline="${d.id}">断る</button>
+          </div>`).join('');
+      html += `<div class="qtitle" style="margin:14px 0 6px;">🎮 プレイ可能な対決</div>`;
+      html += playable.length===0 ? `<div class="empty-hint">プレイ可能な対決はありません。</div>` :
+        playable.map(d=>{
+          const opp = d.challenger_id===currentUserId ? d.opponent_id : d.challenger_id;
+          return `
+          <div class="friend-item chat">
+            <span class="fname">⚔️ 対 ${opp}</span>
+            <button class="fbtn" data-duelplay="${d.id}">プレイする</button>
+          </div>`;
+        }).join('');
+      html += `<div class="qtitle" style="margin:14px 0 6px;">⏳ 結果待ち・送信済みの挑戦</div>`;
+      const pendingAndWaiting = [...pendingOutgoing, ...waiting];
+      html += pendingAndWaiting.length===0 ? `<div class="empty-hint">ありません。</div>` :
+        pendingAndWaiting.map(d=>{
+          const opp = d.challenger_id===currentUserId ? d.opponent_id : d.challenger_id;
+          return `<div class="friend-item pending"><span class="fname">⚔️ 対 ${opp}</span><span class="fsub">結果待ち…</span></div>`;
+        }).join('');
+      html += `<div class="qtitle" style="margin:14px 0 6px;">🏁 完了した対決</div>`;
+      html += completed.length===0 ? `<div class="empty-hint">まだありません。</div>` :
+        completed.slice(0,10).map(d=>`<div class="friend-item"><span class="fname" style="flex:1;">${duelResultText(d)}</span></div>`).join('');
     } else if (tab === 'requests') {
       html += `<div class="qtitle" style="margin-bottom:6px;">📥 届いている申請</div>`;
       if (incomingRequests.length === 0) {
@@ -3064,7 +3471,10 @@
     modalContent.innerHTML = html;
 
     modalContent.querySelectorAll('.tab-btn[data-ftab]').forEach(btn => {
-      btn.addEventListener('click', () => renderFriendsModal(btn.dataset.ftab));
+      btn.addEventListener('click', async () => {
+        if (btn.dataset.ftab === 'duels') await fetchDuelsList();
+        renderFriendsModal(btn.dataset.ftab);
+      });
     });
     const addBtn = document.getElementById('friendAddBtn');
     if (addBtn) {
@@ -3096,6 +3506,21 @@
     });
     modalContent.querySelectorAll('[data-openthread]').forEach(el => {
       el.addEventListener('click', () => openDMThread(el.dataset.openthread));
+    });
+    modalContent.querySelectorAll('[data-challenge]').forEach(el => {
+      el.addEventListener('click', () => challengeFriend(el.dataset.challenge));
+    });
+    modalContent.querySelectorAll('[data-duelaccept]').forEach(el => {
+      el.addEventListener('click', () => respondDuel(el.dataset.duelaccept, true));
+    });
+    modalContent.querySelectorAll('[data-dueldecline]').forEach(el => {
+      el.addEventListener('click', () => respondDuel(el.dataset.dueldecline, false));
+    });
+    modalContent.querySelectorAll('[data-duelplay]').forEach(el => {
+      el.addEventListener('click', () => {
+        const duel = duelsList.find(d => String(d.id)===el.dataset.duelplay);
+        if (duel) playDuel(duel);
+      });
     });
   }
 
@@ -3720,15 +4145,81 @@
     }catch(err){}
   }
 
+  // ===================== メインメニュー画面 =====================
+  const titleScreenEl = document.getElementById('titleScreen');
+
+  function showTitleScreen(){
+    if(currentMode==='tetris') exitTetrisMode();
+    if(currentMode==='timeattack') stopTimeAttackTimer();
+    overlayEl.classList.remove('show');
+    modalOverlay.classList.remove('show');
+    titleScreenEl.classList.remove('hidden');
+  }
+  function hideTitleScreen(){
+    titleScreenEl.classList.add('hidden');
+  }
+
+  document.getElementById('titleStartBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    pendingMode = (currentMode==='tetris' || currentMode==='timeattack') ? 'baked' : currentMode;
+    pendingSize = SIZE;
+    renderSettingsModal('mode');
+    modalOverlay.classList.add('show');
+  });
+  document.getElementById('titleTimeAttackBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    startTimeAttackMode();
+  });
+  document.getElementById('titleRecordsBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    renderRecordsModal();
+    modalOverlay.classList.add('show');
+  });
+  document.getElementById('titleSettingsBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    renderAppSettingsModal();
+    modalOverlay.classList.add('show');
+  });
+
+  // ===================== 更新履歴 / バージョン表示 =====================
+  const CHANGELOG = [
+    { version:'2.0.0', date:'2026-09', items:[
+      '⏱ タイムアタックモードを追加(制限時間60秒、専用ハイスコア・別ランキング)',
+      '🔥 コンボ倍率システムを追加(連続ライン消去でスコア倍率アップ)',
+      '🧱 テトリスにHOLD機能・WASD操作・操作説明パネルを追加',
+      '🏠 メインメニュー画面を新設。記録・実績、設定ページを追加',
+      '🔐 ログイン状態がリロードしても保持されるように改善',
+      '🔊 サウンドを一新(より満足感のあるサウンドに)',
+      '🐞 テトリスのハードドロップがiPad横画面で見えない不具合を修正'
+    ]}
+  ];
+  function renderChangelogHTML(){
+    return `<h4>📢 更新履歴</h4>` + CHANGELOG.map(v=>`
+      <div class="cl-entry"><b>Ver ${v.version}（${v.date}）</b>${v.items.map(i=>`・${i}`).join('<br>')}</div>
+    `).join('');
+  }
+  const changelogPanelEl = document.getElementById('changelogPanel');
+  document.getElementById('versionBadge').addEventListener('click', ()=>{
+    changelogPanelEl.innerHTML = renderChangelogHTML();
+    changelogPanelEl.classList.toggle('show');
+  });
+  document.getElementById('titleChangelogBtn').addEventListener('click', ()=>{
+    changelogPanelEl.innerHTML = renderChangelogHTML();
+    changelogPanelEl.classList.add('show');
+  });
+
   // ===================== 初期化 =====================
   (async function start(){
     await loadCustomBackground();
+    await loadAppSettings();
     await loadBest();
     await loadBestScores();  // モード別ベスト読み込み
     await loadCoins();
     await loadSkinsData();
-    const isFirstTime = await loadSettings();
+    await loadSettings();
     await loadDailyQuests();
+    // リロード後も安全にログイン状態を復元(トークンをサーバーで検証してから復元)
+    await restoreSession();
     updateAccountButton();
     updateModeBadge();
     if(currentMode === 'tetris'){
@@ -3737,12 +4228,8 @@
       initBoard();
       fillTray();
     }
-    // ゲスト状態でプレイ時間は開始しない（ログイン時に開始）
-    if(isFirstTime){
-      pendingMode = currentMode; pendingSize = SIZE;
-      renderSettingsModal('mode');
-      modalOverlay.classList.add('show');
-    }
+    // 外部サイトへは飛ばさず、まずアプリ内のメインメニュー画面を表示する
+    showTitleScreen();
     // お知らせ・アップデート確認(ログイン状態に関わらず定期チェック)
     await loadLastSeenAnnouncement();
     checkAnnouncements();
