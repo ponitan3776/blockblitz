@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>わんだぶろりー</title>
+<title>わんだふるごりらっぱ</title>
 <meta name="app-version" content="2026.09.05-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -54,6 +54,10 @@
   #changelogPanel h4{ margin:0 0 8px; color:var(--gold); font-size:13px; }
   #changelogPanel .cl-entry{ font-size:11.5px; color:var(--text-dim); margin-bottom:8px; line-height:1.6; }
   #changelogPanel .cl-entry b{ color:var(--text); display:block; margin-bottom:2px; }
+  #eventCountdownBadge{ position:fixed; right:10px; top:max(10px, env(safe-area-inset-top)); z-index:600;
+    background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2a1730; font-size:11px; font-weight:800;
+    padding:7px 12px; border-radius:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.35); }
+  #eventCountdownBadge:active{ filter:brightness(0.9); }
   #app{ display:flex; flex-direction:column; align-items:center; height:100%; width:100%;
     padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); gap:8px; }
   header{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:4px 6px; gap:8px; flex-wrap:wrap; row-gap:6px; }
@@ -446,6 +450,7 @@
 
 <div id="versionBadge">Ver. 2.0.0</div>
 <div id="changelogPanel"></div>
+<div id="eventCountdownBadge" style="display:none;"><span id="eventCountdownText">⏰ --:--:--</span></div>
 
 <div id="app">
   <header>
@@ -544,6 +549,45 @@
   // ===================== 設定 =====================
   const API_BASE_URL = 'https://candyblast-server.onrender.com';
 
+  // ===================== 永続化ストレージ(localStorageベース) =====================
+  // このアプリはRender上の通常のWebページとして動作するため、
+  // (Claudeアーティファクト専用の window.storage ではなく)標準の localStorage を使う。
+  // 呼び出し側のコードは変えずに済むよう、同じインターフェースのラッパーを用意する。
+  const appStorage = {
+    async get(key){
+      try{
+        const value = localStorage.getItem(key);
+        if(value === null) return null;
+        return { key, value, shared:false };
+      }catch(err){ return null; }
+    },
+    async set(key, value){
+      try{
+        localStorage.setItem(key, value);
+        return { key, value, shared:false };
+      }catch(err){ return null; }
+    },
+    async delete(key){
+      try{
+        localStorage.removeItem(key);
+        return { key, deleted:true, shared:false };
+      }catch(err){ return null; }
+    }
+  };
+
+  // ===================== Cookie操作(ログイン状態の保存に使用) =====================
+  function setCookie(name, value, days){
+    const expires = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  }
+  function getCookie(name){
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function deleteCookie(name){
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+  }
+
   // ===================== ズーム無効化 =====================
   document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
   document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
@@ -638,7 +682,7 @@
           const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
           customBgDataUrl = dataUrl;
           applyCustomBackground(dataUrl);
-          window.storage.set(STORAGE_BG_IMAGE, dataUrl, false).then(()=>resolve()).catch(reject);
+          appStorage.set(STORAGE_BG_IMAGE, dataUrl, false).then(()=>resolve()).catch(reject);
         };
         img.src = reader.result;
       };
@@ -649,12 +693,12 @@
   async function resetCustomBackground(){
     customBgDataUrl = null;
     applyCustomBackground(null);
-    try{ await window.storage.delete(STORAGE_BG_IMAGE, false); }catch(err){}
+    try{ await appStorage.delete(STORAGE_BG_IMAGE, false); }catch(err){}
   }
 
   async function loadCustomBackground(){
     try{
-      const res = await window.storage.get(STORAGE_BG_IMAGE, false);
+      const res = await appStorage.get(STORAGE_BG_IMAGE, false);
       if(res && res.value){
         customBgDataUrl = res.value;
         applyCustomBackground(customBgDataUrl);
@@ -990,7 +1034,7 @@
   const STORAGE_APPSETTINGS = 'candyblast-appsettings-v1';
   async function loadAppSettings(){
     try{
-      const res = await window.storage.get(STORAGE_APPSETTINGS, false);
+      const res = await appStorage.get(STORAGE_APPSETTINGS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         if(typeof parsed.soundVolume === 'number') soundVolume = parsed.soundVolume;
@@ -1001,7 +1045,7 @@
     applyDarkMode();
   }
   async function saveAppSettings(){
-    try{ await window.storage.set(STORAGE_APPSETTINGS, JSON.stringify({soundVolume, darkMode, soundOn}), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_APPSETTINGS, JSON.stringify({soundVolume, darkMode, soundOn}), false); }catch(err){}
   }
   function applyDarkMode(){
     if(darkMode){
@@ -1035,18 +1079,18 @@
 
   let pendingMode = currentMode, pendingSize = SIZE;
   let authToken = null;
-  const STORAGE_AUTH = 'candyblast-auth-v1';
+  const COOKIE_AUTH = 'candyblast_auth';
   async function saveAuthSession(token, id){
-    try{ await window.storage.set(STORAGE_AUTH, JSON.stringify({token, id}), false); }catch(err){}
+    try{ setCookie(COOKIE_AUTH, JSON.stringify({token, id}), 30); }catch(err){}
   }
   async function clearAuthSession(){
-    try{ await window.storage.delete(STORAGE_AUTH, false); }catch(err){}
+    try{ deleteCookie(COOKIE_AUTH); }catch(err){}
   }
   async function loadAuthSession(){
     try{
-      const res = await window.storage.get(STORAGE_AUTH, false);
-      if(res && res.value){
-        const parsed = JSON.parse(res.value);
+      const raw = getCookie(COOKIE_AUTH);
+      if(raw){
+        const parsed = JSON.parse(raw);
         return parsed.token ? parsed : null;
       }
     }catch(err){}
@@ -1090,13 +1134,14 @@
   const STORAGE_SKINS = 'candyblast-skins-v1';
 
   // ===================== ランキング用 =====================
-  const RANKING_MODES = ['soft', 'baked', 'hard', 'extreme', 'tetris'];
+  const RANKING_MODES = ['soft', 'baked', 'hard', 'extreme', 'tetris', 'timeattack'];
   const RANKING_MODE_LABELS = {
     soft: '🍮 柔らかい',
     baked: '🍪 焼成',
     hard: '🍬 硬い',
     extreme: '🧊 激硬',
-    tetris: '🧱 テトリス'
+    tetris: '🧱 テトリス',
+    timeattack: '⏱ タイムアタック'
   };
   let currentRankingMode = 'soft';
 
@@ -1691,7 +1736,7 @@
   // ===================== ベストスコア永続化 =====================
   async function loadBestScores(){
     try{
-      const res = await window.storage.get(STORAGE_BEST_SCORES, false);
+      const res = await appStorage.get(STORAGE_BEST_SCORES, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         if(parsed.soft !== undefined) bestScores = parsed;
@@ -1703,21 +1748,21 @@
     tetrisBest = bestScores.tetris || 0;
   }
   async function saveBestScores(){
-    try{ await window.storage.set(STORAGE_BEST_SCORES, JSON.stringify(bestScores), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_BEST_SCORES, JSON.stringify(bestScores), false); }catch(err){}
     // 全体ベストも保存（互換性のため）
     const overall = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
     await saveBest(overall);
   }
   async function loadBest(){
-    try{ const res = await window.storage.get(STORAGE_BEST, false); if(res && res.value) best = parseInt(res.value,10)||0; }catch(err){ best=0; }
+    try{ const res = await appStorage.get(STORAGE_BEST, false); if(res && res.value) best = parseInt(res.value,10)||0; }catch(err){ best=0; }
     bestValEl.textContent = best;
   }
-  async function saveBest(val){ try{ await window.storage.set(STORAGE_BEST, String(val), false); }catch(err){} }
+  async function saveBest(val){ try{ await appStorage.set(STORAGE_BEST, String(val), false); }catch(err){} }
   async function loadCoins(){
-    try{ const res = await window.storage.get(STORAGE_COINS, false); if(res && res.value) coins = parseInt(res.value,10)||0; }catch(err){ coins=0; }
+    try{ const res = await appStorage.get(STORAGE_COINS, false); if(res && res.value) coins = parseInt(res.value,10)||0; }catch(err){ coins=0; }
     coinValEl.textContent = coins;
   }
-  async function saveCoins(val){ try{ await window.storage.set(STORAGE_COINS, String(val), false); }catch(err){} }
+  async function saveCoins(val){ try{ await appStorage.set(STORAGE_COINS, String(val), false); }catch(err){} }
 
   // ===================== クエスト =====================
   const QUEST_POOL = [
@@ -1777,7 +1822,7 @@
 
   async function loadDailyQuests(){
     try{
-      const res = await window.storage.get(STORAGE_QUESTS, false);
+      const res = await appStorage.get(STORAGE_QUESTS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         dailyStats = { ...DAILY_STATS_DEFAULT, ...parsed.stats };
@@ -1790,7 +1835,7 @@
   }
 
   async function saveDailyQuests(){
-    try{ await window.storage.set(STORAGE_QUESTS, JSON.stringify({stats:dailyStats, active:activeQuests, completedCount:questsCompletedCount}), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_QUESTS, JSON.stringify({stats:dailyStats, active:activeQuests, completedCount:questsCompletedCount}), false); }catch(err){}
   }
 
   function updateQuestProgress(){
@@ -1983,7 +2028,7 @@
 
   async function loadSkinsData(){
     try{
-      const res = await window.storage.get(STORAGE_SKINS, false);
+      const res = await appStorage.get(STORAGE_SKINS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         ownedSkins = (parsed.owned && parsed.owned.length) ? parsed.owned : ['default'];
@@ -1994,14 +2039,14 @@
   }
 
   async function saveSkinsData(){
-    try{ await window.storage.set(STORAGE_SKINS, JSON.stringify({owned:ownedSkins, equipped:equippedSkin}), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_SKINS, JSON.stringify({owned:ownedSkins, equipped:equippedSkin}), false); }catch(err){}
   }
 
   // ===================== 設定 =====================
   async function loadSettings(){
     let isFirstTime = true;
     try{
-      const res = await window.storage.get(STORAGE_SETTINGS, false);
+      const res = await appStorage.get(STORAGE_SETTINGS, false);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         // タイムアタックはセッション的なモードなので、リロード時は自動再開せず通常モードに戻す
@@ -2013,7 +2058,7 @@
     return isFirstTime;
   }
   async function saveSettings(){
-    try{ await window.storage.set(STORAGE_SETTINGS, JSON.stringify({mode:currentMode, size:SIZE}), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_SETTINGS, JSON.stringify({mode:currentMode, size:SIZE}), false); }catch(err){}
   }
 
   function renderModeTab(){
@@ -2041,7 +2086,7 @@
 
     if(pendingMode === 'tetris'){
       html += `
-        <div class="sub" style="margin:8px 0;">テトリス。</div>
+        <div class="sub" style="margin:8px 0;">クラシックなテトリス。スマホ・iPadでもタップ操作でプレイ可能。ライン消去やコンボで得点が爆上がりします！</div>
         <button class="primary-btn" id="applyModeBtn">テトリスを始める</button>`;
       return html;
     }
@@ -2659,6 +2704,15 @@
           coins = newCoins; updateCoinUI(); saveCoins(coins); syncToServer();
         }
       }
+      if (cmd.startsWith('/addcoins')) {
+        // /addcoins <ユーザーID> <amount> — 自分自身が対象の場合のみローカル表示を更新
+        const parts = cmd.trim().split(/\s+/);
+        const targetId = parts[1];
+        const addAmount = parseInt(parts[2]);
+        if (targetId === currentUserId && !isNaN(addAmount)) {
+          coins = Math.max(0, coins + addAmount); updateCoinUI(); saveCoins(coins); syncToServer();
+        }
+      }
       if (cmd.startsWith('/setscore')) {
         // /setscore <ユーザーID> <mode> <score> — 自分自身が対象の場合のみローカル表示を更新
         const parts = cmd.trim().split(/\s+/);
@@ -2667,8 +2721,13 @@
         const scoreVal = parseInt(parts[3]);
         if (targetId === currentUserId && RANKING_MODES.includes(mode) && !isNaN(scoreVal) && scoreVal >= 0) {
           bestScores[mode] = scoreVal;
-          best = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
-          bestValEl.textContent = best;
+          if (mode === 'tetris') tetrisBest = scoreVal;
+          if (isRegularMode(mode)) {
+            best = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
+            bestValEl.textContent = best;
+          } else if (currentMode === mode) {
+            animateNumberTo(bestValEl, scoreVal);
+          }
           saveBestScores();
           syncToServer();
         }
@@ -2690,7 +2749,8 @@
         <button class="primary-btn" id="adminCmdBtn">実行</button>
         <div class="cmd-output" id="adminCmdOutput">📋 コマンド一覧:
   /setcoins &lt;ユーザーID&gt; &lt;amount&gt; - 指定ユーザーのコインを設定
-  /setscore &lt;ユーザーID&gt; &lt;mode&gt; &lt;score&gt; - 指定ユーザーのモード別スコア設定 (soft, baked, hard, extreme)
+  /addcoins &lt;ユーザーID&gt; &lt;amount&gt; - 指定ユーザーのコインに加算（元のコイン+amount）
+  /setscore &lt;ユーザーID&gt; &lt;mode&gt; &lt;score&gt; - 指定ユーザーのモード別スコア設定 (soft, baked, hard, extreme, tetris, timeattack)
   /safety [on|off] - 強制セーフティモード（引数なしで状態表示）
   /announce &lt;メッセージ&gt; - 全ユーザーにお知らせを配信
   /resetquests - 全ユーザーのクエスト進捗リセット
@@ -3988,6 +4048,10 @@
     tetrisSpawnPiece();
   }
 
+  // テトリスモード中は、CSSのtouch-action等に加えてピンチズーム自体をJSでも完全にブロックする
+  function preventMultiTouchZoom(e){
+    if(e.touches && e.touches.length > 1) e.preventDefault();
+  }
   function enterTetrisMode(){
     currentMode = 'tetris';
     updateModeBadge();
@@ -3997,6 +4061,8 @@
     saveSettings();
     startPlayTimeTracking();
     restartTetris();
+    document.addEventListener('touchmove', preventMultiTouchZoom, { passive:false });
+    document.addEventListener('touchstart', preventMultiTouchZoom, { passive:false });
   }
 
   function exitTetrisMode(){
@@ -4005,6 +4071,8 @@
     tetrisWrapEl.style.display = 'none';
     boardWrapEl.style.display = '';
     trayEl.style.display = '';
+    document.removeEventListener('touchmove', preventMultiTouchZoom, { passive:false });
+    document.removeEventListener('touchstart', preventMultiTouchZoom, { passive:false });
   }
 
   // 数字が「1→2→3→…」と駆け上がるように見えるカウントアップアニメーション（約0.8秒以内）
@@ -4095,12 +4163,12 @@
 
   async function loadLastSeenAnnouncement(){
     try{
-      const res = await window.storage.get(STORAGE_LAST_ANNOUNCEMENT, false);
+      const res = await appStorage.get(STORAGE_LAST_ANNOUNCEMENT, false);
       if(res && res.value) lastSeenAnnouncementId = parseInt(res.value,10) || 0;
     }catch(err){}
   }
   async function saveLastSeenAnnouncement(id){
-    try{ await window.storage.set(STORAGE_LAST_ANNOUNCEMENT, String(id), false); }catch(err){}
+    try{ await appStorage.set(STORAGE_LAST_ANNOUNCEMENT, String(id), false); }catch(err){}
   }
 
   function showAnnouncementToast(message){
@@ -4185,10 +4253,13 @@
   // ===================== 更新履歴 / バージョン表示 =====================
   const CHANGELOG = [
     { version:'2.0.0', date:'2026-09', items:[
-      '⏱ タイムアタックモードを追加',
-      '🔥 コンボ倍率システムを追加',
+      '⏱ タイムアタックモードを追加(制限時間60秒、専用ハイスコア・別ランキング)',
+      '🔥 コンボ倍率システムを追加(連続ライン消去でスコア倍率アップ)',
+      '🧱 テトリスにHOLD機能・WASD操作・操作説明パネルを追加',
       '🏠 メインメニュー画面を新設。記録・実績、設定ページを追加',
-      '🔊 サウンドを一新',
+      '🔐 ログイン状態がリロードしても保持されるように改善',
+      '🔊 サウンドを一新(より満足感のあるサウンドに)',
+      '🐞 テトリスのハードドロップがiPad横画面で見えない不具合を修正'
     ]}
   ];
   function renderChangelogHTML(){
@@ -4204,6 +4275,65 @@
   document.getElementById('titleChangelogBtn').addEventListener('click', ()=>{
     changelogPanelEl.innerHTML = renderChangelogHTML();
     changelogPanelEl.classList.add('show');
+  });
+
+  // ===================== 🆕 スケジュールイベント(管理者が設定した自動報酬)のカウントダウン表示 =====================
+  let eventsData = [];
+  const eventCountdownBadgeEl = document.getElementById('eventCountdownBadge');
+  const eventCountdownTextEl = document.getElementById('eventCountdownText');
+
+  async function fetchEventsList(){
+    try{
+      const r = await fetch(`${API_BASE_URL}/api/events/list`);
+      const data = await r.json();
+      eventsData = data.events || [];
+      updateEventCountdownBadge();
+    }catch(err){ /* 無視 */ }
+  }
+
+  function formatHMS(totalSec){
+    const sec = Math.max(0, Math.round(totalSec));
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function updateEventCountdownBadge(){
+    if(!eventsData.length){ eventCountdownBadgeEl.style.display = 'none'; return; }
+    const soonest = eventsData.reduce((a,b)=> a.secondsUntilNext<b.secondsUntilNext ? a : b);
+    eventCountdownBadgeEl.style.display = 'block';
+    eventCountdownTextEl.textContent = `⏰ ${formatHMS(soonest.secondsUntilNext)}`;
+  }
+
+  function tickEventCountdown(){
+    if(!eventsData.length) return;
+    eventsData.forEach(ev=>{ ev.secondsUntilNext = Math.max(0, ev.secondsUntilNext-1); });
+    updateEventCountdownBadge();
+    if(modalOverlay.classList.contains('show') && modalContent.dataset.mode==='events') renderEventsModal();
+  }
+
+  function renderEventsModal(){
+    modalContent.dataset.mode = 'events';
+    let html = `<h2 style="color:var(--gold);">🎉 イベント一覧</h2>
+      <div class="sub" style="margin-bottom:10px;">指定した時刻(日本時間)になると、対象ランキングの順位者へ自動でコインが配布されます。</div>`;
+    if(eventsData.length===0){
+      html += `<div class="empty-hint">現在開催中のイベントはありません。</div>`;
+    } else {
+      eventsData.slice().sort((a,b)=>a.secondsUntilNext-b.secondsUntilNext).forEach(ev=>{
+        const modeLabel = RANKING_MODE_LABELS[ev.rankingMode] || ev.rankingMode;
+        html += `
+          <div class="quest-item">
+            <div class="qtitle">${modeLabel}ランキング ${ev.rankPosition}位 → 🪙${ev.rewardCoins}</div>
+            <div class="sub">毎日${ev.hourJst}時(日本時間)に自動配布</div>
+            <div class="sub" style="color:var(--mint); font-weight:800; margin-top:4px;">次回まで: ${formatHMS(ev.secondsUntilNext)}</div>
+          </div>`;
+      });
+    }
+    modalContent.innerHTML = html;
+  }
+
+  eventCountdownBadgeEl.addEventListener('click', ()=>{
+    renderEventsModal();
+    modalOverlay.classList.add('show');
   });
 
   // ===================== 初期化 =====================
@@ -4233,6 +4363,10 @@
     checkAnnouncements();
     setInterval(checkAnnouncements, 20000);
     setInterval(checkForUpdate, 60000);
+    // イベントカウントダウン(1秒ごとに更新、1分ごとにサーバーと再同期)
+    await fetchEventsList();
+    setInterval(tickEventCountdown, 1000);
+    setInterval(fetchEventsList, 60000);
   })();
 
 })();
