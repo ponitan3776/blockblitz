@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>わんわんだふるごりらっぱ</title>
-<meta name="app-version" content="2026.09.05-1">
+<meta name="app-version" content="2026.09.07-2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -442,13 +442,13 @@
     <button class="title-menu-btn" id="titleRecordsBtn">🏆 記録・実績</button>
     <button class="title-menu-btn" id="titleSettingsBtn">⚙ 設定</button>
     <div class="title-version-row">
-      <span>Ver. 2.0.1</span>
+      <span>Ver. 2.0.2</span>
       <button id="titleChangelogBtn">📢 更新履歴</button>
     </div>
   </div>
 </div>
 
-<div id="versionBadge">Ver. 2.0.1</div>
+<div id="versionBadge">Ver. 2.0.2</div>
 <div id="changelogPanel"></div>
 <div id="eventCountdownBadge" style="display:none;"><span id="eventCountdownText">⏰ --:--:--</span></div>
 
@@ -1725,7 +1725,22 @@
       if(modeBest < curBest){ bestValEl.textContent = modeBest; } else { animateNumberTo(bestValEl, modeBest); }
     }
   }
-  function updateCoinUI(){ coinValEl.textContent = coins; saveCoins(coins); }
+  // コインなどの大きな数値を K/M/B/T 表記で見やすく表示する(内部の値自体は正確な数値のまま保持)
+  function formatNumber(n){
+    n = Number(n) || 0;
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
+    const units = [ {v:1e15, s:'Q'}, {v:1e12, s:'T'}, {v:1e9, s:'B'}, {v:1e6, s:'M'}, {v:1e3, s:'K'} ];
+    for(const u of units){
+      if(abs >= u.v){
+        const val = abs / u.v;
+        const formatted = val >= 100 ? Math.floor(val) : (Math.round(val*10)/10);
+        return sign + formatted + u.s;
+      }
+    }
+    return sign + Math.floor(abs);
+  }
+  function updateCoinUI(){ coinValEl.textContent = formatNumber(coins); saveCoins(coins); }
 
   function awardGameEndCoins(){
     const earned = Math.floor((score/500) * coinMultiplier());
@@ -1760,7 +1775,7 @@
   async function saveBest(val){ try{ await appStorage.set(STORAGE_BEST, String(val), false); }catch(err){} }
   async function loadCoins(){
     try{ const res = await appStorage.get(STORAGE_COINS, false); if(res && res.value) coins = parseInt(res.value,10)||0; }catch(err){ coins=0; }
-    coinValEl.textContent = coins;
+    coinValEl.textContent = formatNumber(coins);
   }
   async function saveCoins(val){ try{ await appStorage.set(STORAGE_COINS, String(val), false); }catch(err){} }
 
@@ -1927,6 +1942,102 @@
   }
 
   // ===================== 設定(アプリ全体) =====================
+  // ===================== 📮 ご要望・不具合報告(Discordへ転送) =====================
+  let feedbackImageDataUrl = null;
+
+  function renderFeedbackModal(tab){
+    modalContent.dataset.mode = 'feedback';
+    feedbackImageDataUrl = null;
+    let html = `
+      <h2 style="color:var(--gold);">📮 ご要望・不具合報告</h2>
+      <div class="tab-row" style="margin-bottom:10px;">
+        <button class="tab-btn ${tab==='request'?'active':''}" data-fbtab="request">💡 ご要望</button>
+        <button class="tab-btn ${tab==='report'?'active':''}" data-fbtab="report">🐞 不具合報告</button>
+      </div>
+    `;
+    if(tab === 'request'){
+      html += `
+        <div class="sub" style="margin-bottom:8px;">「こんな機能が欲しい」「こんなアップデートをしてほしい」など、次のアップデートに入れてほしい内容を考えて自由に書いてください。</div>
+        <textarea id="feedbackText" placeholder="例: ○○モードに△△機能を追加してほしい、□□の見た目をもっとこうしてほしい、など" style="width:100%; min-height:140px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:var(--bg-deep2); color:var(--text); font-size:14px; font-family:'Nunito',sans-serif; resize:vertical; box-sizing:border-box;"></textarea>
+        <button class="primary-btn" id="feedbackSendBtn">💡 要望を送信する</button>
+        <div class="sub" id="feedbackStatus" style="margin-top:8px;"></div>
+      `;
+    } else {
+      html += `
+        <div class="sub" style="margin-bottom:4px; color:var(--coral); font-weight:700;">⚠️ 「スコアがランキングに反映されない」など再現の証拠が必要な不具合は、スクリーンショットが無いと対応できない場合があります。できるだけ画像を添付してください。</div>
+        <textarea id="feedbackText" placeholder="例: ○○モードでスコアが加算されない、△△のボタンを押しても反応しない、など具体的に書いてください" style="width:100%; min-height:120px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:var(--bg-deep2); color:var(--text); font-size:14px; font-family:'Nunito',sans-serif; resize:vertical; box-sizing:border-box; margin-top:8px;"></textarea>
+        <input type="file" id="feedbackImageInput" accept="image/*" style="display:none;">
+        <button class="ghost-btn" id="feedbackImageBtn" style="width:100%; margin-top:8px;">🖼️ 画像を添付する(任意)</button>
+        <div id="feedbackImagePreviewWrap" style="display:none; margin-top:8px;">
+          <img id="feedbackImagePreview" style="max-width:100%; border-radius:12px; display:block;">
+          <button class="ghost-btn" id="feedbackImageRemoveBtn" style="width:100%; margin-top:6px;">画像を削除</button>
+        </div>
+        <button class="primary-btn" id="feedbackSendBtn">🐞 報告を送信する</button>
+        <div class="sub" id="feedbackStatus" style="margin-top:8px;"></div>
+      `;
+    }
+    modalContent.innerHTML = html;
+
+    modalContent.querySelectorAll('.tab-btn[data-fbtab]').forEach(btn=>{
+      btn.addEventListener('click', ()=> renderFeedbackModal(btn.dataset.fbtab));
+    });
+
+    if(tab === 'report'){
+      const imgBtn = document.getElementById('feedbackImageBtn');
+      const imgInput = document.getElementById('feedbackImageInput');
+      const previewWrap = document.getElementById('feedbackImagePreviewWrap');
+      const previewImg = document.getElementById('feedbackImagePreview');
+      imgBtn.addEventListener('click', ()=> imgInput.click());
+      imgInput.addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          feedbackImageDataUrl = reader.result;
+          previewImg.src = feedbackImageDataUrl;
+          previewWrap.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById('feedbackImageRemoveBtn').addEventListener('click', ()=>{
+        feedbackImageDataUrl = null;
+        imgInput.value = '';
+        previewWrap.style.display = 'none';
+      });
+    }
+
+    document.getElementById('feedbackSendBtn').addEventListener('click', async ()=>{
+      const textEl = document.getElementById('feedbackText');
+      const statusEl = document.getElementById('feedbackStatus');
+      const message = textEl.value.trim();
+      if(!message){ statusEl.textContent = '内容を入力してください。'; statusEl.style.color = 'var(--coral)'; return; }
+      const sendBtn = document.getElementById('feedbackSendBtn');
+      sendBtn.disabled = true;
+      statusEl.textContent = '送信中...';
+      statusEl.style.color = 'var(--text-dim)';
+      try{
+        const endpoint = tab === 'request' ? '/api/feedback/request' : '/api/feedback/report';
+        const body = tab === 'request' ? { message } : { message, imageBase64: feedbackImageDataUrl };
+        const headers = { 'Content-Type': 'application/json' };
+        if(authToken) headers['Authorization'] = `Bearer ${authToken}`;
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, { method:'POST', headers, body: JSON.stringify(body) });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || '送信に失敗しました');
+        statusEl.textContent = '✅ 送信しました。ありがとうございます！';
+        statusEl.style.color = 'var(--mint)';
+        textEl.value = '';
+        feedbackImageDataUrl = null;
+        const previewWrap = document.getElementById('feedbackImagePreviewWrap');
+        if(previewWrap) previewWrap.style.display = 'none';
+      }catch(err){
+        statusEl.textContent = `送信に失敗しました: ${err.message}`;
+        statusEl.style.color = 'var(--coral)';
+      }finally{
+        sendBtn.disabled = false;
+      }
+    });
+  }
+
   function renderAppSettingsModal(){
     modalContent.dataset.mode = 'appsettings';
     modalContent.innerHTML = `
@@ -1942,8 +2053,14 @@
       <div class="settings-row" id="settingsAccountRow" style="cursor:pointer;">
         <span>👤 アカウント</span><span class="sub">${currentUserId ? currentUserId : 'ゲスト'} ›</span>
       </div>
+      <div class="settings-row" id="settingsFeedbackRow" style="cursor:pointer;">
+        <span>📮 ご要望・不具合報告</span><span class="sub">›</span>
+      </div>
       <button class="ghost-btn danger" id="dataResetBtn" style="width:100%; margin-top:8px;">🗑 データリセット</button>
     `;
+    document.getElementById('settingsFeedbackRow').addEventListener('click', ()=>{
+      renderFeedbackModal('request');
+    });
     document.getElementById('volumeSlider').addEventListener('input', (e)=>{
       soundVolume = parseInt(e.target.value,10)/100;
       saveAppSettings();
@@ -2023,6 +2140,7 @@
     if(!ownedSkins.includes(id)) return;
     applySkin(id);
     saveSkinsData();
+    syncToServer(); // ★これが無いとサーバー側のequippedSkinが更新されず、数秒後の定期同期で元のスキンに戻ってしまう
     renderSettingsModal('skin');
   }
 
@@ -2112,13 +2230,14 @@
 
   let skinFilter = 'all';
   function renderSkinTab(){
-    let html = `<div class="sub" style="margin-bottom:8px;">🪙 ${coins} 所持中。ゲームで貯めたコインで見た目を変えられます。</div>`;
+    let html = `<div class="sub" style="margin-bottom:8px;">🪙 ${formatNumber(coins)} 所持中。ゲームで貯めたコインで見た目を変えられます。</div>`;
     html += `<div class="tab-row" style="margin-bottom:10px;">
       <button class="tab-btn sfilter-btn ${skinFilter==='all'?'active':''}" data-sfilter="all">すべて</button>
       <button class="tab-btn sfilter-btn ${skinFilter==='plain'?'active':''}" data-sfilter="plain">無地</button>
       <button class="tab-btn sfilter-btn ${skinFilter==='pattern'?'active':''}" data-sfilter="pattern">🎨 柄物</button>
     </div>`;
-    const list = SKINS.filter(s => skinFilter==='all' ? true : skinFilter==='pattern' ? !!s.pattern : !s.pattern);
+    const list = SKINS.filter(s => skinFilter==='all' ? true : skinFilter==='pattern' ? !!s.pattern : !s.pattern)
+      .slice().sort((a,b)=>a.price-b.price); // 値段の安い順に並べる
     list.forEach(skin=>{
       const owned = ownedSkins.includes(skin.id);
       const equipped = equippedSkin === skin.id;
@@ -2647,7 +2766,7 @@
 
     if (data.coins !== undefined) {
       coins = data.coins;
-      coinValEl.textContent = coins;
+      coinValEl.textContent = formatNumber(coins);
       saveCoins(coins);
     }
     if (data.skins) {
@@ -2753,6 +2872,9 @@
   /setscore &lt;ユーザーID&gt; &lt;mode&gt; &lt;score&gt; - 指定ユーザーのモード別スコア設定 (soft, baked, hard, extreme, tetris, timeattack)
   /safety [on|off] - 強制セーフティモード（引数なしで状態表示）
   /announce &lt;メッセージ&gt; - 全ユーザーにお知らせを配信
+  /eventadd &lt;once|daily|weekly|monthly&gt; &lt;mode&gt; &lt;順位&gt; &lt;コイン&gt; &lt;年&gt; &lt;月&gt; &lt;日&gt; &lt;時&gt; &lt;分&gt; - ランキング順位者へコインを自動配布するイベントを追加(JST基準)
+  /eventlist - 登録済みイベント一覧を表示
+  /eventremove &lt;ID&gt; - イベントを削除
   /resetquests - 全ユーザーのクエスト進捗リセット
   /setplaytime &lt;seconds&gt; - プレイ時間を設定
   /ban &lt;ID&gt; - ユーザーをBAN
@@ -3647,9 +3769,10 @@
 
   friendsBtn.addEventListener('click', async () => {
     if (!authToken) { alert('ログインするとフレンド・DM機能が使えます'); return; }
-    await fetchFriendsData();
-    await fetchDMUnreadSummary();
-    renderFriendsModal(incomingRequests.length ? 'requests' : 'friends');
+    // 先にモーダルを開いて「読み込み中」を見せ、通信が終わってから中身を差し替える
+    // (以前は通信完了までモーダル自体が開かず、待ち時間があるように感じられていた)
+    modalContent.dataset.mode = 'friends';
+    modalContent.innerHTML = `<h2 style="color:var(--gold);">👥 フレンド・DM</h2><div class="empty-hint">読み込み中...</div>`;
     modalOverlay.classList.add('show');
     const observer = new MutationObserver(() => {
       if (!modalOverlay.classList.contains('show')) {
@@ -3658,6 +3781,11 @@
       }
     });
     observer.observe(modalOverlay, { attributes: true, attributeFilter: ['class'] });
+    await fetchFriendsData();
+    await fetchDMUnreadSummary();
+    if (modalOverlay.classList.contains('show')) {
+      renderFriendsModal(incomingRequests.length ? 'requests' : 'friends');
+    }
   });
 
   // ===================== テトリスモード =====================
@@ -4252,7 +4380,13 @@
 
   // ===================== 更新履歴 / バージョン表示 =====================
   const CHANGELOG = [
-    { version:'2.0.1', date:'2026-09-7-16:30', items:[
+    { version:'2.0.2', date:'2026-09-07', items:[
+      '🐞 スキンが数秒後に元に戻ってしまうバグを修正',
+      '⏳ フレンド・DMを開く際の待ち時間を解消（先に画面を開いてから読み込むように変更）',
+      '🎨 スキン一覧を価格順に並び替え',
+      '📜 更新履歴に「過去の履歴」を見られるページを追加'
+    ]},
+    { version:'2.0.1', date:'2026-09-07', items:[
       '⏱ タイムアタックモードのランキングを追加',
       '🔥 イベント機能を追加',
       '🔐 ログイン状態がリロードしても保持されるように改善',
@@ -4262,20 +4396,49 @@
       'リクエストに応えられるよう、要望を送信できるようにする',
       'フレンドとの対戦で、追加報酬が出るようにする',
       '🔐その他のバグ修正'
+    ]},
+    { version:'2.0.0', date:'2026-09', items:[
+      '⏱ タイムアタックモードを追加(制限時間60秒、専用ハイスコア・別ランキング)',
+      '🔥 コンボ倍率システムを追加(連続ライン消去でスコア倍率アップ)',
+      '🧱 テトリスにHOLD機能・WASD操作・操作説明パネルを追加',
+      '🏠 メインメニュー画面を新設。記録・実績、設定ページを追加',
+      '🔊 サウンドを一新(より満足感のあるサウンドに)',
+      '🐞 テトリスのハードドロップがiPad横画面で見えない不具合を修正'
     ]}
   ];
   function renderChangelogHTML(){
-    return `<h4>📢 更新履歴</h4>` + CHANGELOG.map(v=>`
-      <div class="cl-entry"><b>Ver ${v.version}（${v.date}）</b>${v.items.map(i=>`・${i}`).join('<br>')}</div>
-    `).join('');
+    const latest = CHANGELOG[0];
+    return `<h4>📢 更新履歴（最新）</h4>
+      <div class="cl-entry"><b>Ver ${latest.version}（${latest.date}）</b>${latest.items.map(i=>`・${i}`).join('<br>')}</div>
+      <button id="viewFullHistoryBtn" style="width:100%; margin-top:8px; background:var(--panel-light); border:none; color:var(--mint); font-weight:800; font-size:11.5px; padding:8px 0; border-radius:10px; cursor:pointer;">📜 過去の更新履歴を見る</button>
+    `;
+  }
+  function renderFullHistoryModal(){
+    modalContent.dataset.mode = 'history';
+    let html = `<h2 style="color:var(--gold);">📜 過去の更新履歴</h2>`;
+    CHANGELOG.forEach(v=>{
+      html += `<div class="quest-item"><div class="qtitle">Ver ${v.version}（${v.date}）</div>
+        <div class="sub" style="margin-top:4px;">${v.items.map(i=>`・${i}`).join('<br>')}</div></div>`;
+    });
+    modalContent.innerHTML = html;
   }
   const changelogPanelEl = document.getElementById('changelogPanel');
-  document.getElementById('versionBadge').addEventListener('click', ()=>{
+  function openChangelogPanel(){
     changelogPanelEl.innerHTML = renderChangelogHTML();
-    changelogPanelEl.classList.toggle('show');
+    const btn = document.getElementById('viewFullHistoryBtn');
+    if(btn) btn.addEventListener('click', ()=>{
+      changelogPanelEl.classList.remove('show');
+      renderFullHistoryModal();
+      modalOverlay.classList.add('show');
+    });
+  }
+  document.getElementById('versionBadge').addEventListener('click', ()=>{
+    if(changelogPanelEl.classList.contains('show')){ changelogPanelEl.classList.remove('show'); return; }
+    openChangelogPanel();
+    changelogPanelEl.classList.add('show');
   });
   document.getElementById('titleChangelogBtn').addEventListener('click', ()=>{
-    changelogPanelEl.innerHTML = renderChangelogHTML();
+    openChangelogPanel();
     changelogPanelEl.classList.add('show');
   });
 
@@ -4313,10 +4476,18 @@
     if(modalOverlay.classList.contains('show') && modalContent.dataset.mode==='events') renderEventsModal();
   }
 
+  function eventWhenLabel(ev){
+    const t = `${String(ev.hourJst).padStart(2,'0')}:${String(ev.minuteJst||0).padStart(2,'0')}`;
+    if(ev.recurrence==='once') return `${ev.eventYear}/${ev.eventMonth}/${ev.eventDay} ${t} に一度だけ`;
+    if(ev.recurrence==='weekly') return `毎週${['日','月','火','水','木','金','土'][ev.eventDay]}曜 ${t}`;
+    if(ev.recurrence==='monthly') return `毎月${ev.eventDay}日 ${t}`;
+    return `毎日 ${t}`;
+  }
+
   function renderEventsModal(){
     modalContent.dataset.mode = 'events';
     let html = `<h2 style="color:var(--gold);">🎉 イベント一覧</h2>
-      <div class="sub" style="margin-bottom:10px;">指定した時刻(日本時間)になると、対象ランキングの順位者へ自動でコインが配布されます。</div>`;
+      <div class="sub" style="margin-bottom:10px;">指定した日時(日本時間)になると、対象ランキングの順位者へ自動でコインが配布されます。</div>`;
     if(eventsData.length===0){
       html += `<div class="empty-hint">現在開催中のイベントはありません。</div>`;
     } else {
@@ -4324,8 +4495,8 @@
         const modeLabel = RANKING_MODE_LABELS[ev.rankingMode] || ev.rankingMode;
         html += `
           <div class="quest-item">
-            <div class="qtitle">${modeLabel}ランキング ${ev.rankPosition}位 → 🪙${ev.rewardCoins}</div>
-            <div class="sub">毎日${ev.hourJst}時(日本時間)に自動配布</div>
+            <div class="qtitle">${modeLabel}ランキング ${ev.rankPosition}位 → 🪙${formatNumber(ev.rewardCoins)}</div>
+            <div class="sub">${eventWhenLabel(ev)}(日本時間)に自動配布</div>
             <div class="sub" style="color:var(--mint); font-weight:800; margin-top:4px;">次回まで: ${formatHMS(ev.secondsUntilNext)}</div>
           </div>`;
       });
@@ -4368,7 +4539,7 @@
     // イベントカウントダウン(1秒ごとに更新、1分ごとにサーバーと再同期)
     await fetchEventsList();
     setInterval(tickEventCountdown, 1000);
-    setInterval(fetchEventsList, 60000);
+    setInterval(fetchEventsList, 5000); // 短めの間隔にして、管理者がイベントを削除した際も全員の画面にすぐ反映されるようにする
   })();
 
 })();
