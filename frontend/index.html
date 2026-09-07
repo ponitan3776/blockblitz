@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>わんだふるごりらっぱ</title>
+<title>わんわんだふるごりらっぱ</title>
 <meta name="app-version" content="2026.09.05-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -442,7 +442,7 @@
     <button class="title-menu-btn" id="titleRecordsBtn">🏆 記録・実績</button>
     <button class="title-menu-btn" id="titleSettingsBtn">⚙ 設定</button>
     <div class="title-version-row">
-      <span>Ver. 2.0.0</span>
+      <span>Ver. 2.0.1</span>
       <button id="titleChangelogBtn">📢 更新履歴</button>
     </div>
   </div>
@@ -2086,13 +2086,13 @@
 
     if(pendingMode === 'tetris'){
       html += `
-        <div class="sub" style="margin:8px 0;">クラシックなテトリス。スマホ・iPadでもタップ操作でプレイ可能。ライン消去やコンボで得点が爆上がりします！</div>
+        <div class="sub" style="margin:8px 0;">テトリス。圧倒的にキーボード操作推奨。タッチ操作は修正中。</div>
         <button class="primary-btn" id="applyModeBtn">テトリスを始める</button>`;
       return html;
     }
     if(pendingMode === 'timeattack'){
       html += `
-        <div class="sub" style="margin:8px 0;">制限時間${TIME_ATTACK_DURATION}秒でどれだけ高得点を出せるか挑戦！通常モードとは別にハイスコアが記録されます。</div>
+        <div class="sub" style="margin:8px 0;">制限時間${TIME_ATTACK_DURATION}秒でどれだけ高得点を出せるか挑戦！してね。うん。</div>
         <button class="primary-btn" id="applyModeBtn">タイムアタックを始める</button>`;
       return html;
     }
@@ -4252,17 +4252,16 @@
 
   // ===================== 更新履歴 / バージョン表示 =====================
   const CHANGELOG = [
-    { version:'2.0.1', date:'2026-09-7-16:15', items:[
+    { version:'2.0.1', date:'2026-09-7-16:30', items:[
+      '⏱ タイムアタックモードのランキングを追加',
       '🔥 イベント機能を追加',
-      '🕐 タイムアタックのランキングを追加',
-      '🏠 メインメニュー画面を新設。記録・実績、設定ページを追加',
-      '🔐 ログイン状態がリロードしても保持されるように改善
-
-今後の予定
-フレンドとのタイムアタック対戦でコインの追加報酬が出るようにする。
-
-実装して欲しい機能を送信することができるようにする。',
-      
+      '🔐 ログイン状態がリロードしても保持されるように改善',
+      'その他のバグ修正',
+      '',
+      '📅 今後の予定',
+      'リクエストに応えられるよう、要望を送信できるようにする',
+      'フレンドとの対戦で、追加報酬が出るようにする',
+      '🔐その他のバグ修正'
     ]}
   ];
   function renderChangelogHTML(){
