@@ -104,6 +104,18 @@
   @keyframes pulseUrgent{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
 
   #board-wrap{ position:relative; width:min(90vw, 54vh, 460px); aspect-ratio:1/1; }
+  /* 🎰 ガチャ限定スキン専用の虹色シマーエフェクト(装備中のみ盤面に重ねて表示) */
+  .gacha-shimmer-active #board::after, .gacha-shimmer-active #tetrisBoard::after{
+    content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit; z-index:5;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.4) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 52%, transparent 70%);
+    background-size:250% 250%;
+    animation:gachaShimmerSweep 3.2s ease-in-out infinite;
+    mix-blend-mode:overlay;
+  }
+  @keyframes gachaShimmerSweep{
+    0%{ background-position:200% 200%; }
+    100%{ background-position:-50% -50%; }
+  }
   #board{ position:relative; width:100%; height:100%; display:grid; grid-template-columns:repeat(8,1fr);
     grid-template-rows:repeat(8,1fr); gap:4px; background:var(--panel); border-radius:20px; padding:8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.05); }
@@ -439,6 +451,9 @@
     <div class="title-sub">CANDY BLAST</div>
     <button class="title-menu-btn primary" id="titleStartBtn">▶ ゲーム開始</button>
     <button class="title-menu-btn" id="titleTimeAttackBtn">⏱ タイムアタック</button>
+    <button class="title-menu-btn" id="titleWeeklyBtn">🎲 週替わりチャレンジ</button>
+    <button class="title-menu-btn" id="titleGachaBtn">🎰 ガチャ</button>
+    <button class="title-menu-btn" id="titleBattlePassBtn">🎫 バトルパス</button>
     <button class="title-menu-btn" id="titleRecordsBtn">🏆 記録・実績</button>
     <button class="title-menu-btn" id="titleSettingsBtn">⚙ 設定</button>
     <div class="title-version-row">
@@ -939,10 +954,60 @@
       ] }
   ];
 
+  // ===================== 🎰 ガチャ限定スキン(購入不可、ガチャでのみ入手可能。最も作り込んだスキン) =====================
+  const GACHA_SKINS = [
+    { id:'gacha_cosmicdragon', name:'🐉 コズミックドラゴン', price:0, gacha:true, gachaEffect:true,
+      desc:'銀河の彼方より舞い降りし竜の鱗。虹色の輝きが盤面全体を包み込む、ガチャ限定の至宝。',
+      vars:{ '--bg-deep':'#050318','--bg-deep2':'#0d0630','--panel':'#160b45','--panel-light':'#241259',
+        '--gold':'#FFD700','--coral':'#FF3DBE','--mint':'#3DFFD0','--blue':'#3D8BFF','--purple':'#8A3DFF',
+        '--pink':'#FF3DBE','--lime':'#B0FF3D','--text':'#F5F0FF','--text-dim':'#A995D9' },
+      titleGrad:'linear-gradient(90deg,#FFD700,#FF3DBE,#3D8BFF)',
+      colors:[
+        {bg:'linear-gradient(135deg,#FFD700 0%,#FF9D3D 35%,#FF3DBE 70%,#8A3DFF 100%)'},
+        {bg:'linear-gradient(135deg,#3DFFD0 0%,#3D8BFF 50%,#8A3DFF 100%)'},
+        {bg:'linear-gradient(135deg,#FF3DBE 0%,#B03DFF 50%,#3D8BFF 100%)'},
+        {bg:'linear-gradient(135deg,#3D8BFF 0%,#3DFFD0 50%,#B0FF3D 100%)'},
+        {bg:'linear-gradient(135deg,#FFD700 0%,#FF3DBE 50%,#8A3DFF 100%)'},
+        {bg:'linear-gradient(135deg,#B0FF3D 0%,#3DFFD0 50%,#3D8BFF 100%)'},
+        {bg:'linear-gradient(135deg,#8A3DFF 0%,#FF3DBE 50%,#FFD700 100%)'}
+      ] },
+    { id:'gacha_celestialphoenix', name:'🔥 セレスティアルフェニックス', price:0, gacha:true, gachaEffect:true,
+      desc:'天空を焦がして舞い上がる不死鳥の炎。触れれば燃え尽きるほどの熱を秘めた、ガチャ限定の伝説。',
+      vars:{ '--bg-deep':'#1a0500','--bg-deep2':'#2e0a00','--panel':'#451400','--panel-light':'#5c1e00',
+        '--gold':'#FFEC3D','--coral':'#FF4500','--mint':'#FFB03D','--blue':'#FF7A3D','--purple':'#FF2D55',
+        '--pink':'#FF6B3D','--lime':'#FFD93D','--text':'#FFF6E9','--text-dim':'#D9A87F' },
+      titleGrad:'linear-gradient(90deg,#FFEC3D,#FF4500,#FF2D55)',
+      colors:[
+        {bg:'linear-gradient(135deg,#FFEC3D 0%,#FFB03D 40%,#FF4500 80%,#FF2D55 100%)'},
+        {bg:'linear-gradient(135deg,#FFD93D 0%,#FF7A3D 50%,#FF4500 100%)'},
+        {bg:'linear-gradient(135deg,#FF4500 0%,#FF2D55 50%,#B0003D 100%)'},
+        {bg:'linear-gradient(135deg,#FFEC3D 0%,#FF6B3D 50%,#FF2D55 100%)'},
+        {bg:'linear-gradient(135deg,#FFB03D 0%,#FF4500 50%,#FF2D55 100%)'},
+        {bg:'linear-gradient(135deg,#FFF6D0 0%,#FFEC3D 40%,#FF7A3D 100%)'},
+        {bg:'linear-gradient(135deg,#FF2D55 0%,#FF4500 50%,#FFB03D 100%)'}
+      ] },
+    { id:'gacha_voidempress', name:'👑 ヴォイドエンプレス', price:0, gacha:true, gachaEffect:true,
+      desc:'虚無を統べる女帝の威光。漆黒と紫銀の輝きが交差する、静謐にして絶対的な支配の証。',
+      vars:{ '--bg-deep':'#020005','--bg-deep2':'#0a0512','--panel':'#150a26','--panel-light':'#221238',
+        '--gold':'#E8D9FF','--coral':'#D63DFF','--mint':'#C9C9FF','--blue':'#7D3DFF','--purple':'#B03DFF',
+        '--pink':'#FF3DDB','--lime':'#C9A8FF','--text':'#F5F0FF','--text-dim':'#9080B8' },
+      titleGrad:'linear-gradient(90deg,#E8D9FF,#B03DFF,#D63DFF)',
+      colors:[
+        {bg:'linear-gradient(135deg,#E8D9FF 0%,#C9A8FF 40%,#B03DFF 80%,#3D0A5C 100%)'},
+        {bg:'linear-gradient(135deg,#7D3DFF 0%,#3D0A5C 50%,#0A0018 100%)'},
+        {bg:'linear-gradient(135deg,#D63DFF 0%,#B03DFF 50%,#5C0A8A 100%)'},
+        {bg:'linear-gradient(135deg,#C9C9FF 0%,#7D3DFF 50%,#2E0050 100%)'},
+        {bg:'linear-gradient(135deg,#FF3DDB 0%,#B03DFF 50%,#3D0A5C 100%)'},
+        {bg:'linear-gradient(135deg,#E8D9FF 0%,#D63DFF 50%,#5C0A8A 100%)'},
+        {bg:'linear-gradient(135deg,#3D0A5C 0%,#7D3DFF 50%,#E8D9FF 100%)'}
+      ] }
+  ];
+  SKINS.push(...GACHA_SKINS);
+
   // ===================== 模様入りスキンを自動生成（既存パレット×パターンの組み合わせ）=====================
   // 通常スキンより高価に設定し、ボードの各ブロックに柄（ストライプ・ドットなど）を重ねて描画する
   (function generatePatternedSkins(){
-    const plainSkins = SKINS.slice();
+    const plainSkins = SKINS.filter(s=>!s.gacha); // ガチャ限定スキンは柄違いバージョンを作らない(購入不可のまま維持)
     const patternKeys = Object.keys(PATTERN_LAYERS);
     plainSkins.forEach((base, i)=>{
       const patternKey = patternKeys[i % patternKeys.length];
@@ -1258,6 +1323,269 @@
     initBoard();
     fillTray();
     startTimeAttackTimer();
+  }
+
+  // ===================== 🆕 週替わりチャレンジ(ランダムな難易度・盤面サイズ、週1回) =====================
+  async function fetchWeeklyChallenge(){
+    try{
+      const headers = {};
+      if(authToken) headers['Authorization'] = `Bearer ${authToken}`;
+      const r = await fetch(`${API_BASE_URL}/api/weekly-challenge`, { headers });
+      return await r.json();
+    }catch(err){ return null; }
+  }
+
+  async function openWeeklyChallengeModal(){
+    modalContent.dataset.mode = 'weeklychallenge';
+    modalContent.innerHTML = `<h2 style="color:var(--gold);">🎲 週替わりチャレンジ</h2><div class="empty-hint">読み込み中...</div>`;
+    modalOverlay.classList.add('show');
+    const data = await fetchWeeklyChallenge();
+    if(!modalOverlay.classList.contains('show') || modalContent.dataset.mode!=='weeklychallenge') return;
+    if(!data || !data.challenge){
+      modalContent.innerHTML = `<h2 style="color:var(--gold);">🎲 週替わりチャレンジ</h2><div class="empty-hint">現在準備中です。しばらくお待ちください。</div>`;
+      return;
+    }
+    const c = data.challenge;
+    const modeLabel = (MODES[c.mode] && MODES[c.mode].label) || c.mode;
+    let html = `<h2 style="color:var(--gold);">🎲 週替わりチャレンジ</h2>
+      <div class="sub" style="margin-bottom:8px;">今週のお題: <b style="color:var(--mint);">${modeLabel} ${c.size}×${c.size}</b></div>
+      <div class="sub">1人1回だけ挑戦できます。1位には🪙${formatNumber(c.reward)}コイン！</div>
+      <div class="sub" style="color:var(--coral); font-weight:800; margin:6px 0 12px;">リセットまで: ${formatHMS(c.secondsUntilReset)}</div>`;
+    if(!authToken){
+      html += `<div class="empty-hint">挑戦するにはログインが必要です。</div>`;
+    } else if(data.hasPlayed){
+      html += `<div class="quest-item"><div class="qtitle">✅ 挑戦済み！ あなたのスコア: ${data.myScore}</div></div>`;
+    } else {
+      html += `<button class="primary-btn" id="weeklyChallengeStartBtn">🎲 挑戦する</button>`;
+    }
+    html += `<h3 style="color:var(--mint); margin:14px 0 8px;">🏆 ランキング TOP10</h3>`;
+    if(!data.ranking || data.ranking.length===0){
+      html += `<div class="empty-hint">まだ挑戦者がいません。一番乗りを目指そう！</div>`;
+    } else {
+      data.ranking.forEach((r,i)=>{
+        html += `<div class="friend-item"><span class="fname">${i+1}. ${r.id}</span><span class="fsub">${r.score}点</span></div>`;
+      });
+    }
+    modalContent.innerHTML = html;
+    const startBtn = document.getElementById('weeklyChallengeStartBtn');
+    if(startBtn) startBtn.addEventListener('click', ()=>{
+      closeModal();
+      startWeeklyChallenge(c);
+    });
+  }
+
+  function startWeeklyChallenge(challenge){
+    if(currentMode==='tetris') exitTetrisMode();
+    if(currentMode==='timeattack') stopTimeAttackTimer();
+    weeklyChallengeActive = true;
+    weeklyChallengeInfo = challenge;
+    currentMode = challenge.mode;
+    SIZE = challenge.size;
+    const modeLabel = (MODES[challenge.mode] && MODES[challenge.mode].label) || challenge.mode;
+    modeBadgeEl.textContent = `🎲 週替わり: ${modeLabel} ${SIZE}×${SIZE}`;
+    overlayEl.classList.remove('show');
+    score = 0; streak = 0; noClearStreak = 0;
+    scoreValEl.textContent = '0';
+    initBoard();
+    fillTray();
+  }
+
+  // ===================== 🎰 ガチャ(限定スキン、天井あり) =====================
+  async function fetchGachaState(){
+    if(!authToken) return null;
+    try{
+      const r = await fetch(`${API_BASE_URL}/api/gacha/state`, { headers:{ 'Authorization':`Bearer ${authToken}` } });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(err){ return null; }
+  }
+
+  async function openGachaModal(){
+    modalContent.dataset.mode = 'gacha';
+    if(!authToken){
+      modalContent.innerHTML = `<h2 style="color:var(--gold);">🎰 ガチャ</h2><div class="empty-hint">ログインするとガチャに挑戦できます。</div>`;
+      modalOverlay.classList.add('show');
+      return;
+    }
+    modalContent.innerHTML = `<h2 style="color:var(--gold);">🎰 ガチャ</h2><div class="empty-hint">読み込み中...</div>`;
+    modalOverlay.classList.add('show');
+    const state = await fetchGachaState();
+    if(!modalOverlay.classList.contains('show') || modalContent.dataset.mode!=='gacha') return;
+    renderGachaModal(state);
+  }
+
+  function renderGachaModal(state){
+    if(!state){
+      modalContent.innerHTML = `<h2 style="color:var(--gold);">🎰 ガチャ</h2><div class="empty-hint">読み込みに失敗しました。</div>`;
+      return;
+    }
+    const pityPct = Math.min(100, Math.round((state.pityCounter / state.pityThreshold) * 100));
+    const gachaSkinCards = GACHA_SKINS.map(s=>`
+      <div class="skin-swatches" style="margin-bottom:2px;">${buildPatternedColors(s.colors).slice(0,4).map(c=>`<span class="swatch" style="background:${c.bg}"></span>`).join('')}</div>
+    `).join('');
+    let html = `
+      <h2 style="color:var(--gold);">🎰 ガチャ</h2>
+      <div class="sub" style="margin-bottom:8px;">1回 🪙${formatNumber(state.cost)}。低確率でガチャ限定スキンが手に入ります(被った場合は🪙${formatNumber(500)}に還元)。</div>
+      <div class="quest-item" style="text-align:center;">
+        <div class="qtitle">🐉🔥👑 ガチャ限定スキン</div>
+        ${gachaSkinCards}
+        <div class="sub" style="margin-top:6px;">天井: ${state.pityThreshold}回以内に必ず1つ獲得できます</div>
+        <div class="quest-bar-bg" style="margin-top:8px;"><div class="quest-bar-fill" style="width:${pityPct}%"></div></div>
+        <div class="sub" style="margin-top:4px;">天井まで: ${state.pityCounter} / ${state.pityThreshold}回</div>
+      </div>
+      <div class="sub" style="margin:8px 0; text-align:center;">🪙 所持: ${formatNumber(state.coins)}${state.freeTickets>0 ? ` ／ 🎫 無料チケット: ${state.freeTickets}枚` : ''}</div>
+      <button class="primary-btn" id="gachaPullBtn" ${(state.coins<state.cost && !(state.freeTickets>0))?'disabled':''}>
+        ${state.freeTickets>0 ? '🎫 無料チケットで引く' : `🎰 ${formatNumber(state.cost)}コインで引く`}
+      </button>
+      <div id="gachaResultArea" style="margin-top:10px;"></div>
+    `;
+    modalContent.innerHTML = html;
+    document.getElementById('gachaPullBtn').addEventListener('click', performGachaPull);
+  }
+
+  async function performGachaPull(){
+    const btn = document.getElementById('gachaPullBtn');
+    const resultArea = document.getElementById('gachaResultArea');
+    btn.disabled = true;
+    resultArea.innerHTML = `<div class="empty-hint">🎰 抽選中...</div>`;
+    try{
+      const res = await fetch(`${API_BASE_URL}/api/gacha/pull`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || '抽選に失敗しました');
+
+      if(data.resultType === 'win'){
+        const skin = GACHA_SKINS.find(s=>s.id===data.skinId);
+        ownedSkins = data.ownedSkins;
+        saveSkinsData();
+        playSound('coin');
+        resultArea.innerHTML = `
+          <div class="quest-item" style="text-align:center; border:2px solid var(--gold);">
+            <div class="qtitle" style="font-size:16px;">${data.pityTriggered?'🎯 天井達成！':'🎉 大当たり！'}</div>
+            <div class="skin-swatches" style="justify-content:center; margin:8px 0;">${buildPatternedColors(skin.colors).map(c=>`<span class="swatch" style="background:${c.bg}"></span>`).join('')}</div>
+            <div style="font-weight:800;">${skin.name} を獲得しました！</div>
+          </div>`;
+      } else if(data.resultType === 'duplicate'){
+        playSound('coin');
+        const skin = GACHA_SKINS.find(s=>s.id===data.skinId);
+        resultArea.innerHTML = `<div class="quest-item" style="text-align:center;">
+          <div class="qtitle">${skin.name} が被りました…</div>
+          <div class="sub">代わりに 🪙${formatNumber(data.coinsGained)} を獲得しました。</div>
+        </div>`;
+      } else {
+        resultArea.innerHTML = `<div class="quest-item" style="text-align:center;">
+          <div class="qtitle">残念、ハズレ…</div>
+          <div class="sub">🪙${formatNumber(data.coinsGained)} を獲得しました。</div>
+        </div>`;
+      }
+
+      coins = data.coins;
+      updateCoinUI();
+      renderGachaModal({
+        coins: data.coins, totalPulls: data.totalPulls, pityCounter: data.pityCounter,
+        pityThreshold: data.pityThreshold, cost: GACHA_COST_CLIENT, freeTickets: data.freeTickets, ownedSkins: data.ownedSkins
+      });
+      // 結果表示だけは上のresultAreaに残したいので再度差し込む
+      document.getElementById('gachaResultArea').innerHTML = resultArea.innerHTML;
+    }catch(err){
+      resultArea.innerHTML = `<div class="empty-hint">${err.message}</div>`;
+      btn.disabled = false;
+    }
+  }
+  const GACHA_COST_CLIENT = 2000; // サーバー側のGACHA_COSTと合わせておくための表示用フォールバック
+
+  // ===================== 🎫 バトルパス(経験値でレベルアップ、報酬はループ、レベル上限なし) =====================
+  async function fetchBattlePassState(){
+    if(!authToken) return null;
+    try{
+      const r = await fetch(`${API_BASE_URL}/api/battlepass/state`, { headers:{ 'Authorization':`Bearer ${authToken}` } });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(err){ return null; }
+  }
+
+  async function openBattlePassModal(){
+    modalContent.dataset.mode = 'battlepass';
+    if(!authToken){
+      modalContent.innerHTML = `<h2 style="color:var(--gold);">🎫 バトルパス</h2><div class="empty-hint">ログインするとバトルパスに参加できます。</div>`;
+      modalOverlay.classList.add('show');
+      return;
+    }
+    modalContent.innerHTML = `<h2 style="color:var(--gold);">🎫 バトルパス</h2><div class="empty-hint">読み込み中...</div>`;
+    modalOverlay.classList.add('show');
+    const state = await fetchBattlePassState();
+    if(!modalOverlay.classList.contains('show') || modalContent.dataset.mode!=='battlepass') return;
+    renderBattlePassModal(state);
+  }
+
+  function battlePassRewardLabel(reward){
+    if(reward.type==='coins') return `🪙 ${formatNumber(reward.amount)}コイン`;
+    if(reward.type==='gacha_ticket') return `🎫 ガチャ無料チケット×${reward.amount}`;
+    return '???';
+  }
+
+  function renderBattlePassModal(state){
+    if(!state){
+      modalContent.innerHTML = `<h2 style="color:var(--gold);">🎫 バトルパス</h2><div class="empty-hint">読み込みに失敗しました。</div>`;
+      return;
+    }
+    const pct = Math.round((state.xpIntoLevel / state.xpPerLevel) * 100);
+    let html = `
+      <h2 style="color:var(--gold);">🎫 バトルパス</h2>
+      <div class="sub" style="margin-bottom:8px;">ゲームをプレイして経験値を貯めよう。レベル上限はなく、報酬は10レベルごとにループします。</div>
+      <div class="quest-item" style="text-align:center;">
+        <div class="qtitle" style="font-size:20px;">Lv. ${state.level}</div>
+        <div class="quest-bar-bg" style="margin-top:8px;"><div class="quest-bar-fill" style="width:${pct}%"></div></div>
+        <div class="sub" style="margin-top:4px;">${state.xpIntoLevel} / ${state.xpPerLevel} XP</div>
+      </div>
+      <h3 style="color:var(--mint); margin:14px 0 8px;">🎁 報酬一覧</h3>
+    `;
+    state.rewards.slice().reverse().forEach(r=>{
+      html += `
+        <div class="quest-item">
+          <div class="quest-foot">
+            <span>Lv.${r.level} — ${battlePassRewardLabel(r)}</span>
+            <button class="claim-btn" data-bplevel="${r.level}" ${r.claimed?'disabled':''}>${r.claimed?'受取済み':'受け取る'}</button>
+          </div>
+        </div>`;
+    });
+    modalContent.innerHTML = html;
+    modalContent.querySelectorAll('[data-bplevel]').forEach(btn=>{
+      btn.addEventListener('click', ()=>claimBattlePassLevel(parseInt(btn.dataset.bplevel)));
+    });
+  }
+
+  async function claimBattlePassLevel(level){
+    try{
+      const res = await fetch(`${API_BASE_URL}/api/battlepass/claim`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}` },
+        body: JSON.stringify({ level })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error);
+      coins = data.coins;
+      updateCoinUI();
+      playSound('coin');
+      const state = await fetchBattlePassState();
+      renderBattlePassModal(state);
+    }catch(err){
+      alert(err.message);
+    }
+  }
+
+  // ゲームプレイに応じてバトルパスの経験値を加算する(スコア10点=1XP換算、サーバー側でも上限チェックあり)
+  function grantBattlePassXp(scoreGained){
+    if(!authToken || scoreGained<=0) return;
+    const xp = Math.floor(scoreGained / 10);
+    if(xp<=0) return;
+    fetch(`${API_BASE_URL}/api/battlepass/addxp`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}` },
+      body: JSON.stringify({ amount: xp })
+    }).catch(()=>{});
   }
 
   function applyMode(mode, size){
@@ -1675,8 +2003,11 @@
 
   // ===================== スコア周り（リアルタイム同期対応） =====================
   let lastSyncTime = 0;
+  let weeklyChallengeActive = false;
+  let weeklyChallengeInfo = null;
+
   function syncBestScore() {
-    if (!authToken) return;
+    if (!authToken || weeklyChallengeActive) return; // 週替わりチャレンジは通常のベストスコアを汚さない
     // 現在のモードのベストを更新
     const currentBest = bestScores[currentMode] || 0;
     if (score > currentBest) {
@@ -1698,8 +2029,10 @@
     }
   }
 
+  let sessionScoreForXp = 0;
   function addScore(amount){
     score += amount;
+    sessionScoreForXp += amount;
     dailyStats.scoreEarned += amount;
     dailyStats.bestSingleGameScore = Math.max(dailyStats.bestSingleGameScore||0, score);
     updateScoreUI();
@@ -1712,6 +2045,7 @@
   function updateScoreUI(){
     const curScore = parseInt(scoreValEl.textContent,10) || 0;
     if(score < curScore){ scoreValEl.textContent = score; } else { animateNumberTo(scoreValEl, score); }
+    if(weeklyChallengeActive) return; // 週替わりチャレンジ中は通常のベスト表示を更新しない
     const curBest = parseInt(bestValEl.textContent,10) || 0;
     if(isRegularMode(currentMode)){
       const maxBest = Math.max(bestScores.soft, bestScores.baked, bestScores.hard, bestScores.extreme);
@@ -2122,12 +2456,13 @@
         if(cellData.filled && COLORS[cellData.colorIdx]) cellEls[idx].style.background = COLORS[cellData.colorIdx].bg;
       });
     }
+    document.body.classList.toggle('gacha-shimmer-active', !!skin.gachaEffect);
     renderTray();
   }
 
   function buySkin(id){
     const skin = SKINS.find(s=>s.id===id);
-    if(!skin || ownedSkins.includes(id) || coins < skin.price) return;
+    if(!skin || skin.gacha || ownedSkins.includes(id) || coins < skin.price) return;
     coins -= skin.price;
     ownedSkins.push(id);
     updateCoinUI();
@@ -2231,28 +2566,37 @@
   let skinFilter = 'all';
   function renderSkinTab(){
     let html = `<div class="sub" style="margin-bottom:8px;">🪙 ${formatNumber(coins)} 所持中。ゲームで貯めたコインで見た目を変えられます。</div>`;
-    html += `<div class="tab-row" style="margin-bottom:10px;">
+    html += `<div class="tab-row" style="margin-bottom:10px; flex-wrap:wrap;">
       <button class="tab-btn sfilter-btn ${skinFilter==='all'?'active':''}" data-sfilter="all">すべて</button>
       <button class="tab-btn sfilter-btn ${skinFilter==='plain'?'active':''}" data-sfilter="plain">無地</button>
       <button class="tab-btn sfilter-btn ${skinFilter==='pattern'?'active':''}" data-sfilter="pattern">🎨 柄物</button>
+      <button class="tab-btn sfilter-btn ${skinFilter==='gacha'?'active':''}" data-sfilter="gacha">🎰 ガチャ限定</button>
     </div>`;
-    const list = SKINS.filter(s => skinFilter==='all' ? true : skinFilter==='pattern' ? !!s.pattern : !s.pattern)
-      .slice().sort((a,b)=>a.price-b.price); // 値段の安い順に並べる
+    // ガチャ限定スキンは通常ショップの「すべて/無地/柄物」には出さず、専用フィルタでのみ表示する(コインでの購入は不可)
+    const list = SKINS.filter(s => {
+      if(skinFilter==='gacha') return !!s.gacha;
+      if(s.gacha) return false;
+      return skinFilter==='all' ? true : skinFilter==='pattern' ? !!s.pattern : !s.pattern;
+    }).slice().sort((a,b)=>a.price-b.price); // 値段の安い順に並べる
+    if(skinFilter==='gacha' && list.every(s=>!ownedSkins.includes(s.id))){
+      html += `<div class="empty-hint">まだガチャ限定スキンを持っていません。🎰ガチャで手に入れよう！</div>`;
+    }
     list.forEach(skin=>{
       const owned = ownedSkins.includes(skin.id);
       const equipped = equippedSkin === skin.id;
-      const canBuy = !owned && coins >= skin.price;
-      let btnLabel = equipped ? '装備中' : owned ? '装備する' : (skin.price===0 ? '入手する' : (canBuy ? '購入する' : 'コインが足りません'));
-      let btnAction = equipped ? '' : owned ? 'equip' : 'buy';
+      const canBuy = !owned && !skin.gacha && coins >= skin.price;
+      let btnLabel = equipped ? '装備中' : owned ? '装備する' : (skin.gacha ? '🎰ガチャ限定' : (skin.price===0 ? '入手する' : (canBuy ? '購入する' : 'コインが足りません')));
+      let btnAction = equipped ? '' : owned ? 'equip' : (skin.gacha ? '' : 'buy');
       const swatchColors = buildPatternedColors(skin.colors, skin.pattern);
+      if(skin.gacha && !owned) return; // 未入手のガチャ限定スキンはカードごと非表示(ガチャフィルタでは「持っていない」ことが分かればよい)
       html += `
         <div class="quest-item">
-          <div class="qtitle">${skin.name}${equipped?' ✅':''}${skin.pattern?' <span class="coin-tag">柄物</span>':''}</div>
+          <div class="qtitle">${skin.name}${equipped?' ✅':''}${skin.pattern?' <span class="coin-tag">柄物</span>':''}${skin.gacha?' <span class="coin-tag">🎰限定</span>':''}</div>
           <div class="sub" style="margin:2px 0 8px;">${skin.desc}</div>
           <div class="skin-swatches">${swatchColors.map(c=>`<span class="swatch" style="background:${c.bg}"></span>`).join('')}</div>
           <div class="quest-foot" style="margin-top:8px;">
-            <span>${skin.price===0 ? '無料' : `🪙${skin.price}`}</span>
-            <button class="claim-btn" data-skin="${skin.id}" data-action="${btnAction}" ${(equipped || (!owned && !canBuy))?'disabled':''}>${btnLabel}</button>
+            <span>${skin.gacha ? '🎰ガチャ限定' : (skin.price===0 ? '無料' : `🪙${formatNumber(skin.price)}`)}</span>
+            <button class="claim-btn" data-skin="${skin.id}" data-action="${btnAction}" ${(equipped || (!owned && (!canBuy && !skin.gacha)) || (skin.gacha && !owned))?'disabled':''}>${btnLabel}</button>
           </div>
         </div>`;
     });
@@ -2421,6 +2765,21 @@
     if(currentMode==='hard' || currentMode==='extreme') dailyStats.hardModeGamesPlayed = (dailyStats.hardModeGamesPlayed||0) + 1;
     saveDailyQuests();
     updateQuestProgress();
+    grantBattlePassXp(sessionScoreForXp);
+    sessionScoreForXp = 0;
+
+    if(weeklyChallengeActive){
+      weeklyChallengeActive = false;
+      finalScoreEl.textContent = score;
+      newBestNoteEl.textContent = '🎲 週替わりチャレンジ結果';
+      coinEarnedNoteEl.textContent = '';
+      duelResultNoteEl.textContent = '送信中...';
+      overlayEl.classList.add('show');
+      submitWeeklyChallengeScore(score);
+      syncPlayTime();
+      return;
+    }
+
     const earned = awardGameEndCoins();
     if(earned>0) playSound('coin');
     finalScoreEl.textContent = score;
@@ -2433,7 +2792,10 @@
       currentDuelId = null;
       duelResultNoteEl.textContent = '対決の結果を送信中...';
       submitDuelScore(duelId, score).then(duel=>{
-        if(duel) duelResultNoteEl.textContent = duelResultText(duel);
+        if(duel){
+          duelResultNoteEl.textContent = duelResultText(duel);
+          if(duel.status==='completed') syncFromServer(); // 対決報酬のコインをすぐ画面に反映
+        }
         else duelResultNoteEl.textContent = '対決結果の送信に失敗しました。';
       });
     }
@@ -2441,6 +2803,21 @@
     // ゲーム終了時にサーバーへ送信（既にリアルタイムで送っているが、念のため）
     if (authToken) syncToServer();
     syncPlayTime();
+  }
+
+  async function submitWeeklyChallengeScore(finalScore){
+    try{
+      const res = await fetch(`${API_BASE_URL}/api/weekly-challenge/submit`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}` },
+        body: JSON.stringify({ score: finalScore })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || '送信に失敗しました');
+      duelResultNoteEl.textContent = `✅ スコア${finalScore}を送信しました！結果はランキングで確認できます。`;
+    }catch(err){
+      duelResultNoteEl.textContent = `送信に失敗しました: ${err.message}`;
+    }
   }
   restartBtn.addEventListener('click', ()=>{
     overlayEl.classList.remove('show');
@@ -3495,9 +3872,9 @@
     const oppScore = isChallenger ? duel.opponent_score : duel.challenger_score;
     const oppId = isChallenger ? duel.opponent_id : duel.challenger_id;
     if (duel.status !== 'completed') return `対 ${oppId}：相手の結果を待っています…`;
-    if (myScore > oppScore) return `🏆 対 ${oppId} に勝利！（自分 ${myScore} - 相手 ${oppScore}）`;
+    if (myScore > oppScore) return `🏆 対 ${oppId} に勝利！（自分 ${myScore} - 相手 ${oppScore}）🪙+200コイン獲得！`;
     if (myScore < oppScore) return `😢 対 ${oppId} に敗北…（自分 ${myScore} - 相手 ${oppScore}）`;
-    return `🤝 対 ${oppId} と引き分け（${myScore} - ${oppScore}）`;
+    return `🤝 対 ${oppId} と引き分け（${myScore} - ${oppScore}）🪙+50コイン獲得！`;
   }
 
   async function removeFriendFn(friendId){
@@ -4140,6 +4517,7 @@
     tetrisActive = false;
     tetrisStopLoop();
     playSound('gameover');
+    grantBattlePassXp(tetrisScore);
     const earned = Math.max(0, Math.floor(tetrisScore/40));
     if(earned>0){
       coins += earned;
@@ -4367,6 +4745,18 @@
     hideTitleScreen();
     startTimeAttackMode();
   });
+  document.getElementById('titleWeeklyBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    openWeeklyChallengeModal();
+  });
+  document.getElementById('titleGachaBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    openGachaModal();
+  });
+  document.getElementById('titleBattlePassBtn').addEventListener('click', ()=>{
+    hideTitleScreen();
+    openBattlePassModal();
+  });
   document.getElementById('titleRecordsBtn').addEventListener('click', ()=>{
     hideTitleScreen();
     renderRecordsModal();
@@ -4381,8 +4771,10 @@
   // ===================== 更新履歴 / バージョン表示 =====================
   const CHANGELOG = [
     { version:'2.0.2', date:'2026-09-07', items:[
+      '📮 設定画面に「ご要望・不具合報告」を新設。ご要望と不具合報告を分けて送信でき、不具合報告には画像を添付可能に',
       '🐞 スキンが数秒後に元に戻ってしまうバグを修正',
-      'アップデートの内容や、不具合の報告（スコアなどが反映されない）などを送れるようになりました。（メニュー→設定→ご要望・不具合報告',
+      '🎫 バトルパスを追加',
+      '⚡ ガチャ機能を追加',
       '⏳ フレンド・DMを開く際の待ち時間を解消（先に画面を開いてから読み込むように変更）',
       '🎨 スキン一覧を価格順に並び替え',
       '📜 更新履歴に「過去の履歴」を見られるページを追加'
