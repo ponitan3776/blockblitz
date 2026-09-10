@@ -19,11 +19,21 @@
     width:100%;
   }
   img, canvas, video, iframe { max-width:100%; touch-action:none; }
+
+  /* 🔽 ボタン系のダブルタップズーム防止 */
+  button, .icon-btn, .pill-btn, .tetris-btn, .title-menu-btn,
+  .claim-btn, .fbtn, .tab-btn, .close-x, .dm-thread-back,
+  .tetris-help-btn, .mode-card, .toggle-switch {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* スクロールが必要な要素だけ pan-y を個別許可 */
   .panel-box, #changelogPanel, #chatMessages, #dmMessages, .cmd-output, .auth-form, #rankingContent, #settingsTabBody, #friendsTabBody{
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
+
   #titleScreen{ position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(circle at 50% -10%, var(--bg-deep2), var(--bg-deep) 60%); padding:20px;
     padding-top:max(20px, env(safe-area-inset-top)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
