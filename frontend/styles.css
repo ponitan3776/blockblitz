@@ -1,4 +1,4 @@
-:root{
+  :root{
     --bg-deep:#1a1233; --bg-deep2:#241a45;
     --panel:#2c2054; --panel-light:#382a68;
     --gold:#FFD93D; --coral:#FF6B6B; --mint:#3DDC97;
@@ -10,30 +10,11 @@
     margin:0; padding:0; height:100%;
     background:radial-gradient(circle at 50% -10%, var(--bg-deep2), var(--bg-deep) 60%);
     font-family:'Nunito', sans-serif; color:var(--text);
-    overflow:hidden;
-    touch-action:none;
-    user-select:none;
+    overflow:hidden; touch-action:none; user-select:none;
+    touch-action: pan-x pan-y;
     -webkit-text-size-adjust: 100%;
-    overscroll-behavior:none;
-    position:fixed;
-    width:100%;
   }
   img, canvas, video, iframe { max-width:100%; touch-action:none; }
-
-  /* 🔽 ボタン系のダブルタップズーム防止 */
-  button, .icon-btn, .pill-btn, .tetris-btn, .title-menu-btn,
-  .claim-btn, .fbtn, .tab-btn, .close-x, .dm-thread-back,
-  .tetris-help-btn, .mode-card, .toggle-switch {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* スクロールが必要な要素だけ pan-y を個別許可 */
-  .panel-box, #changelogPanel, #chatMessages, #dmMessages, .cmd-output, .auth-form, #rankingContent, #settingsTabBody, #friendsTabBody{
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-
   #titleScreen{ position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(circle at 50% -10%, var(--bg-deep2), var(--bg-deep) 60%); padding:20px;
     padding-top:max(20px, env(safe-area-inset-top)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
@@ -68,8 +49,7 @@
     padding:7px 12px; border-radius:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.35); }
   #eventCountdownBadge:active{ filter:brightness(0.9); }
   #app{ display:flex; flex-direction:column; align-items:center; height:100%; width:100%;
-    padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); gap:8px;
-    touch-action:none; }
+    padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); gap:8px; }
   header{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:4px 6px; gap:8px; flex-wrap:wrap; row-gap:6px; }
   .title-wrap{ display:flex; flex-direction:column; gap:1px; flex-shrink:0; }
   .title{ 
@@ -164,18 +144,47 @@
   .combo-text.mega{ font-size:clamp(26px,9vw,46px); text-shadow:0 0 22px rgba(255,217,61,0.95), 0 0 40px rgba(255,111,181,0.6), 0 3px 0 rgba(0,0,0,0.4); }
 
   /* ===================== テトリスモード ===================== */
-  #tetris-wrap{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; gap:10px; }
+#tetris-wrap{
+    display:none;
+    width:100%;
+    max-width:520px;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
   #tetris-wrap, #tetris-wrap *{
     touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent;
   }
-  .tetris-layout{ display:flex; gap:10px; width:100%; justify-content:center; align-items:flex-start; position:relative; }
-  #tetrisBoard{ position:relative; width:min(46vw, 34vh, 240px); aspect-ratio:1/2; display:grid;
-    grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(20,1fr); gap:2px;
-    background:var(--panel); border-radius:16px; padding:6px; flex-shrink:0;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.05); }
-  .tetris-cell{ border-radius:3px; background:rgba(255,255,255,0.06); }
-  .tetris-cell.filled{ box-shadow: inset 0 2px 4px rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.25); }
+.tetris-layout{
+    display:flex;
+    gap:10px;
+    width:100%;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+#tetrisBoard{
+    position:relative;
+    height: 100%;
+    max-height: 100%;
+    width: auto;
+    aspect-ratio:1/2;
+    display:grid;
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:repeat(20,1fr);
+    gap:2px;
+    background:var(--panel);
+    border-radius:16px;
+    padding:6px;
+    flex-shrink: 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
   .tetris-cell.ghost{ background:rgba(255,255,255,0.16); }
   .tetris-cell.clearing{ animation:clearFlash 0.32s ease-in forwards; z-index:5; }
   .tetris-side{ display:flex; flex-direction:column; gap:10px; min-width:78px; flex-shrink:0; position:relative; }
@@ -198,7 +207,13 @@
     box-shadow:0 12px 30px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); }
   .tetris-help-panel.show{ display:block; }
   .tetris-help-panel b{ color:var(--gold); display:block; margin-bottom:4px; font-size:12px; }
-  .tetris-controls{ width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.tetris-controls{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    flex-shrink: 0;
+  }
   .tetris-btn{ background:var(--panel-light); border:1px solid rgba(255,255,255,0.08); border-radius:14px;
     padding:16px 0; font-size:22px; font-weight:800; color:var(--text); text-align:center; cursor:pointer;
     user-select:none; touch-action:none; }
@@ -209,11 +224,19 @@
 
   /* iPad横画面など、横長で高さが低いビューポートではハードドロップ等が画面外に隠れてしまうため、
      ボード＋操作パネルを横並びレイアウトに切り替えて画面内に収める */
-  @media (orientation: landscape) and (max-height: 620px){
+ /* 画面の高さが低いときは自動でボードを縮める(縦向き含む) */
+  @media (max-height: 780px){
+    #tetrisBoard{ height: min(54dvh, 440px); }
+  }
+  @media (max-height: 660px){
+    #tetrisBoard{ height: min(48dvh, 380px); }
+  }
+  /* iPad横画面など、横長で高さが低いビューポートは横並びレイアウトに切り替え */
+  @media (orientation: landscape) and (max-height: 700px){
     #tetris-wrap{ flex-direction:row; align-items:center; justify-content:center; gap:16px; max-width:100%; }
-    .tetris-layout{ flex-direction:column; align-items:center; width:auto; }
-    #tetrisBoard{ width:auto; height:min(82vh, 420px); }
-    .tetris-controls{ display:flex; flex-direction:column; width:150px; gap:8px; margin-top:0; }
+    .tetris-layout{ flex-direction:column; align-items:center; width:auto; flex: 0 0 auto; }
+    #tetrisBoard{ height:min(80dvh, 460px); width:auto; }
+    .tetris-controls{ display:flex; flex-direction:column; width:150px; gap:8px; margin-top:0; flex-shrink: 0; }
     .tetris-btn.wide{ grid-column:unset; }
   }
 
