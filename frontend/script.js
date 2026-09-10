@@ -46,6 +46,28 @@
   document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
   document.addEventListener('gestureend', function(e) { e.preventDefault(); });
 
+  // ===================== ダブルタップズーム・ピンチズーム完全防止(iOS Safari対策) =====================
+  let _lastTouchEndTime = 0;
+  document.addEventListener('touchend', function(e){
+    const now = Date.now();
+    if(now - _lastTouchEndTime <= 350){
+      e.preventDefault();
+    }
+    _lastTouchEndTime = now;
+  }, { passive: false });
+
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('dblclick', function(e){
+    e.preventDefault();
+  }, { passive: false });
+
   // ===================== 戻るボタン =====================
   document.getElementById('backButton').addEventListener('click', function(e) {
     e.preventDefault();
